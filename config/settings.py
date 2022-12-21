@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "sales.apps.SalesConfig",
     "common.apps.CommonConfig",
     "users.apps.UsersConfig",
+    "rest_framework",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -131,3 +132,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.User"
+
+# NPR API
+NPR_API_KEY = env("NPR_API_KEY")
+NPR_SECRET_KEY = env("NPR_SECRET_KEY")
