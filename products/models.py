@@ -7,5 +7,4 @@ from common.models import CommonModel
 class Product(CommonModel):
 
     name = models.CharField(max_length=200)
-    price = models.PositiveIntegerField()
     brand = models.ForeignKey(to="brands.Brand", on_delete=models.CASCADE)
