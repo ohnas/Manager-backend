@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Sale",
+            name="Brand",
             fields=[
                 (
                     "id",
@@ -24,6 +24,8 @@ class Migration(migrations.Migration):
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=150)),
+                ("description", models.TextField(null=True)),
             ],
             options={
                 "abstract": False,

@@ -4,5 +4,5 @@ from common.models import CommonModel
 # Create your models here.
 
 
-class Sale(CommonModel):
+class Advertising(CommonModel):
     pass

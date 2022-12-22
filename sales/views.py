@@ -1,11 +1,12 @@
-from django.shortcuts import render
 from django.conf import settings
-from django.http import HttpResponse
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 import requests
 
 # Create your views here.
 
 
+@api_view()
 def sale_retrieve(request):
     # KEY = settings.NPR_API_KEY
     # SECREAT = settings.NPR_SECRET_KEY
@@ -14,7 +15,7 @@ def sale_retrieve(request):
     # )
     # access_token = access_token.json()
     # access_token = access_token["access_token"]
-    headers = {"access-token": "d7144a45432192b5f4e9dbd7437798e8", "version": "latest"}
+    headers = {"access-token": "44861f8758dd48ddba78a9be6e8b9e91", "version": "latest"}
     sales = requests.get("https://api.imweb.me/v2/shop/orders", headers=headers)
     sales = sales.json()
     sales = sales["data"]
@@ -45,5 +46,4 @@ def sale_retrieve(request):
                     "deliv_price": prod_deliv_price,
                 }
                 prod_orders.append(prod_order)
-    print(prod_orders)
-    return HttpResponse(prod_orders)
+    return Response(prod_orders)

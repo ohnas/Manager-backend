@@ -36,21 +36,27 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "sales.apps.SalesConfig",
-    "common.apps.CommonConfig",
-    "users.apps.UsersConfig",
-    "rest_framework",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
+    "corsheaders",
+    "sales.apps.SalesConfig",
+    "common.apps.CommonConfig",
+    "users.apps.UsersConfig",
+    "advertisings.apps.AdvertisingsConfig",
+    "brands.apps.BrandsConfig",
+    "products.apps.ProductsConfig",
+    "sites.apps.SitesConfig",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -132,6 +138,10 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.User"
+
+CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:5500"]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # NPR API
 NPR_API_KEY = env("NPR_API_KEY")
