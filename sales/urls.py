@@ -1,7 +1,7 @@
 from django.urls import path
-from sales.views import sale_retrieve
+from sales.views import Sales
 
 
 urlpatterns = [
-    path("npr", sale_retrieve),
+    path("npr", Sales.as_view()),
 ]
