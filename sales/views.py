@@ -8,7 +8,7 @@ import requests
 
 
 class Sales(APIView):
-    def imweb_api(self, request):
+    def imweb_api(self):
         KEY = settings.NPR_API_KEY
         SECREAT = settings.NPR_SECRET_KEY
         access_token = requests.get(
@@ -46,7 +46,7 @@ class Sales(APIView):
                         "name": prod_name,
                         "count": prod_count,
                         "price": prod_price,
-                        "deliv_price": prod_deliv_price,
+                        "delivery_price": prod_deliv_price,
                         "pay_time": pay_time,
                     }
                     prod_orders.append(prod_order)
@@ -55,7 +55,7 @@ class Sales(APIView):
     def get(self, request):
         sales = Sale.objects.all()
         if sales.count() == 0:
-            return Response(self.imweb_api(request))
+            return Response(self.imweb_api())
         else:
             serializer = SaleSerializer(sales, many=True)
             return Response(serializer.data)
