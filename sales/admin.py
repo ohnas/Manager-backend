@@ -7,4 +7,12 @@ from sales.models import Sale
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
-    pass
+
+    list_display = (
+        "product",
+        "count",
+        "price",
+        "delivery_price",
+        "pay_time",
+        "site",
+    )
