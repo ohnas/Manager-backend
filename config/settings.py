@@ -124,7 +124,9 @@ TIME_ZONE = "Asia/Seoul"
 
 USE_I18N = True
 
-USE_TZ = True
+# USE_TZ = True -> Django 내부적으로 시간대를 인식하는 날짜 및 시간 사용
+# USE_TZ = False -> Local Time을 사용
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)

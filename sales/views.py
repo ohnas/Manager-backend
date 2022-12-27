@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from sales.models import Sale
 from sales.serializers import SaleSerializer
+from products.models import Product
 import time
 import requests
 
@@ -54,8 +55,22 @@ class Sales(APIView):
 
     def get(self, request):
         sales = Sale.objects.all()
+        # db에 저장되어 있는 데이터가 없을경우 imweb 데이터를 요청하고 해당데이터를 db에 저장한 후 response
+        # to-do : db에 없는 프로덕트(fk) 일 경우 오류발생 시켜서 프로덕트를 먼저 생성 할 것을 요구하기
         if sales.count() == 0:
-            return Response(self.imweb_api())
+            results = self.imweb_api()
+            for result in results:
+                product = Product.objects.get(name=result["name"])
+                sale = Sale(
+                    product=product,
+                    count=result["count"],
+                    price=result["price"],
+                    delivery_price=result["delivery_price"],
+                    pay_time=result["pay_time"],
+                )
+                sale.save()
+            serializer = SaleSerializer(sales, many=True)
+            return Response(serializer.data)
         else:
             serializer = SaleSerializer(sales, many=True)
             return Response(serializer.data)
