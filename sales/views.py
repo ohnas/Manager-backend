@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from sales.models import Sale
 from sales.serializers import SaleSerializer
 from products.models import Product
@@ -9,6 +10,9 @@ import requests
 
 
 class Sales(APIView):
+
+    permission_classes = [IsAuthenticated]
+
     def imweb_api(self):
         KEY = settings.NPR_API_KEY
         SECREAT = settings.NPR_SECRET_KEY
