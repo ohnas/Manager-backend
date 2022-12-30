@@ -10,6 +10,24 @@ from users.models import User
 from brands.serializers import BrandSerializer
 
 
+class UserProfile(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        user = self.get_object(pk)
+        if user != request.user:
+            raise PermissionDenied
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+
 class BrandByUser(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -55,7 +73,9 @@ class LogIn(APIView):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return Response({"response": "success"}, status=status.HTTP_200_OK)
+            return Response(
+                {"response": "success", "user_pk": user.pk}, status=status.HTTP_200_OK
+            )
         else:
             raise ParseError
 
