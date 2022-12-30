@@ -14,18 +14,10 @@ class UserProfile(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, pk):
-        try:
-            return User.objects.get(pk=pk)
-        except User.DoesNotExist:
-            raise NotFound
-
-    def get(self, request, pk):
-        user = self.get_object(pk)
-        if user != request.user:
-            raise PermissionDenied
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
+    def get(self, request):
+        if request.user:
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data)
 
 
 class BrandByUser(APIView):
