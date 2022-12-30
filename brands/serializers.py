@@ -1,13 +1,11 @@
 from rest_framework.serializers import ModelSerializer
-from users.models import User
+from brands.models import Brand
 
 
-class UserSerializer(ModelSerializer):
+class BrandSerializer(ModelSerializer):
     class Meta:
-        model = User
+        model = Brand
         fields = (
             "pk",
-            "username",
             "name",
-            "email",
         )
