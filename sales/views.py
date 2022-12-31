@@ -60,7 +60,6 @@ class Sales(APIView):
         return prod_orders
 
     def get_object(self, brandname):
-        print(brandname)
         try:
             return Brand.objects.get(name=brandname)
         except Brand.DoesNotExist:
