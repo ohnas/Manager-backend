@@ -1,22 +1,15 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticated
 from brands.serializers import BrandSerializer
 from brands.models import Brand
 
 
-class BrandDetail(APIView):
+class Brands(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, pk):
-        try:
-            return Brand.objects.get(pk=pk)
-        except Brand.DoesNotExist:
-            raise NotFound
-
-    def get(self, request, pk):
-        brand = self.get_object(pk)
-        serializer = BrandSerializer(brand)
+    def get(self, request):
+        brands = Brand.objects.filter(user=request.user.pk)
+        serializer = BrandSerializer(brands, many=True)
         return Response(serializer.data)

@@ -2,12 +2,10 @@ from django.db import transaction
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ParseError, NotFound, PermissionDenied
+from rest_framework.exceptions import ParseError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from users.serializers import UserSerializer
-from users.models import User
-from brands.serializers import BrandSerializer
 
 
 class UserProfile(APIView):
@@ -18,25 +16,6 @@ class UserProfile(APIView):
         if request.user:
             serializer = UserSerializer(request.user)
             return Response(serializer.data)
-
-
-class BrandByUser(APIView):
-
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, pk):
-        try:
-            return User.objects.get(pk=pk)
-        except User.DoesNotExist:
-            raise NotFound
-
-    def get(self, request, pk):
-        user = self.get_object(pk)
-        if user != request.user:
-            raise PermissionDenied
-        brands = user.brand_set.all()
-        serializer = BrandSerializer(brands, many=True)
-        return Response(serializer.data)
 
 
 class CreateUser(APIView):
