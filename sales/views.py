@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from sales.models import Sale
 from sales.serializers import SaleSerializer
 from products.models import Product
+from datetime import datetime
 import time
 import requests
 
@@ -14,7 +15,15 @@ class Sales(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def imweb_api(self):
+    def imweb_api(self, date):
+        order_date_from = date + " 00:00:00"
+        order_date_from = time.mktime(
+            datetime.strptime(order_date_from, "%Y-%m-%d %H:%M:%S").timetuple()
+        )
+        order_date_to = date + " 23:59:59"
+        order_date_to = time.mktime(
+            datetime.strptime(order_date_to, "%Y-%m-%d %H:%M:%S").timetuple()
+        )
         KEY = settings.NPR_API_KEY
         SECREAT = settings.NPR_SECRET_KEY
         access_token = requests.get(
@@ -23,7 +32,10 @@ class Sales(APIView):
         access_token = access_token.json()
         access_token = access_token["access_token"]
         headers = {"access-token": access_token, "version": "latest"}
-        sales = requests.get("https://api.imweb.me/v2/shop/orders", headers=headers)
+        sales = requests.get(
+            f"https://api.imweb.me/v2/shop/orders?order_date_from={order_date_from}&order_date_to={order_date_to}",
+            headers=headers,
+        )
         sales = sales.json()
         sales = sales["data"]
         sales = sales["list"]
@@ -69,17 +81,17 @@ class Sales(APIView):
         # db에 저장되어 있는 데이터가 없을경우 imweb 데이터를 요청하고 해당데이터를 db에 저장한 후 response
         # to-do : db에 없는 프로덕트(fk) 일 경우 오류발생 시켜서 프로덕트를 먼저 생성 할 것을 요구하기
         if sales.count() == 0:
-            results = self.imweb_api()
-            for result in results:
-                product = Product.objects.get(name=result["name"])
-                sale = Sale(
-                    product=product,
-                    count=result["count"],
-                    price=result["price"],
-                    delivery_price=result["delivery_price"],
-                    pay_time=result["pay_time"],
-                )
-                sale.save()
+            results = self.imweb_api(date)
+            # for result in results:
+            #     product = Product.objects.get(name=result["name"])
+            #     sale = Sale(
+            #         product=product,
+            #         count=result["count"],
+            #         price=result["price"],
+            #         delivery_price=result["delivery_price"],
+            #         pay_time=result["pay_time"],
+            #     )
+            #     sale.save()
             serializer = SaleSerializer(sales, many=True)
             return Response(serializer.data)
         else:
