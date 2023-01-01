@@ -44,9 +44,7 @@ class LogIn(APIView):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return Response(
-                {"response": "success", "user_pk": user.pk}, status=status.HTTP_200_OK
-            )
+            return Response({"response": "success"}, status=status.HTTP_200_OK)
         else:
             raise ParseError
 
