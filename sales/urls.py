@@ -3,5 +3,5 @@ from sales.views import Sales
 
 
 urlpatterns = [
-    path("@<str:brandname>/<int:pk>", Sales.as_view()),
+    path("", Sales.as_view()),
 ]

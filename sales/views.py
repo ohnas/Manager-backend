@@ -6,7 +6,6 @@ from rest_framework.permissions import IsAuthenticated
 from sales.models import Sale
 from sales.serializers import SaleSerializer
 from products.models import Product
-from brands.models import Brand
 import time
 import requests
 
@@ -59,16 +58,14 @@ class Sales(APIView):
                     prod_orders.append(prod_order)
         return prod_orders
 
-    def get_object(self, brandname):
+    def get(self, request):
         try:
-            return Brand.objects.get(name=brandname)
-        except Brand.DoesNotExist:
+            product_name = request.query_params["product"]
+            date = request.query_params["date"]
+            product = Product.objects.get(name=product_name)
+            sales = Sale.objects.filter(product=product.pk, pay_time__date=date)
+        except Product.DoesNotExist:
             raise NotFound
-
-    def get(self, request, brandname, pk):
-        brand = self.get_object(brandname)
-        product = brand.product_set.get(pk=pk)
-        sales = product.sale_set.all()
         # db에 저장되어 있는 데이터가 없을경우 imweb 데이터를 요청하고 해당데이터를 db에 저장한 후 response
         # to-do : db에 없는 프로덕트(fk) 일 경우 오류발생 시켜서 프로덕트를 먼저 생성 할 것을 요구하기
         if sales.count() == 0:
