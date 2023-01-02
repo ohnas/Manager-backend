@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
@@ -16,6 +17,7 @@ class Sales(APIView):
     permission_classes = [IsAuthenticated]
 
     def imweb_api(self, date):
+        # 프론트에서 입력받은 날짜를 stamptime으로 변경해서 검색하기
         order_date_from = date + " 00:00:00"
         order_date_from = time.mktime(
             datetime.strptime(order_date_from, "%Y-%m-%d %H:%M:%S").timetuple()
@@ -79,21 +81,21 @@ class Sales(APIView):
         except Product.DoesNotExist:
             raise NotFound
         # db에 저장되어 있는 데이터가 없을경우 imweb 데이터를 요청하고 해당데이터를 db에 저장한 후 response
-        # to-do : db에 없는 프로덕트(fk) 일 경우 오류발생 시켜서 프로덕트를 먼저 생성 할 것을 요구하기
         if sales.count() == 0:
             results = self.imweb_api(date)
-            # for result in results:
-            #     product = Product.objects.get(name=result["name"])
-            #     sale = Sale(
-            #         product=product,
-            #         count=result["count"],
-            #         price=result["price"],
-            #         delivery_price=result["delivery_price"],
-            #         pay_time=result["pay_time"],
-            #     )
-            #     sale.save()
-            serializer = SaleSerializer(sales, many=True)
-            return Response(serializer.data)
+            with transaction.atomic():
+                for result in results:
+                    product = Product.objects.get(name=result["name"])
+                    sale = Sale(
+                        product=product,
+                        count=result["count"],
+                        price=result["price"],
+                        delivery_price=result["delivery_price"],
+                        pay_time=result["pay_time"],
+                    )
+                    sale.save()
+                serializer = SaleSerializer(sales, many=True)
+                return Response(serializer.data)
         else:
             serializer = SaleSerializer(sales, many=True)
             return Response(serializer.data)
