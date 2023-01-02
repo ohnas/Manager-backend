@@ -6,6 +6,7 @@ class SiteSerializer(ModelSerializer):
     class Meta:
         model = Site
         fields = (
+            "pk",
             "name",
             "url",
         )

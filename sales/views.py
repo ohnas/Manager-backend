@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from sales.models import Sale
 from sales.serializers import SaleSerializer
 from products.models import Product
+from sites.models import Site
 from datetime import datetime
 import time
 import requests
@@ -16,7 +17,7 @@ class Sales(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def imweb_api(self, date):
+    def imweb_api(self, product, date, site_name):
         # 프론트에서 입력받은 날짜를 stamptime으로 변경해서 검색하기
         order_date_from = date + " 00:00:00"
         order_date_from = time.mktime(
@@ -26,8 +27,9 @@ class Sales(APIView):
         order_date_to = time.mktime(
             datetime.strptime(order_date_to, "%Y-%m-%d %H:%M:%S").timetuple()
         )
-        KEY = settings.NPR_API_KEY
-        SECREAT = settings.NPR_SECRET_KEY
+        site = Site.objects.get(name=site_name)
+        KEY = site.api_key
+        SECREAT = site.secret_key
         access_token = requests.get(
             f"https://api.imweb.me/v2/auth?key={KEY}&secret={SECREAT}"
         )
@@ -57,24 +59,26 @@ class Sales(APIView):
                 pay_time = prod["pay_time"]
                 pay_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(pay_time))
                 for item in items:
-                    prod_name = item["prod_name"]
-                    payment = item["payment"]
-                    prod_count = payment["count"]
-                    prod_price = payment["price"]
-                    prod_deliv_price = payment["deliv_price"]
-                    prod_order = {
-                        "name": prod_name,
-                        "count": prod_count,
-                        "price": prod_price,
-                        "delivery_price": prod_deliv_price,
-                        "pay_time": pay_time,
-                    }
-                    prod_orders.append(prod_order)
+                    if product.name == item["prod_name"]:
+                        prod_name = item["prod_name"]
+                        payment = item["payment"]
+                        prod_count = payment["count"]
+                        prod_price = payment["price"]
+                        prod_deliv_price = payment["deliv_price"]
+                        prod_order = {
+                            "name": prod_name,
+                            "count": prod_count,
+                            "price": prod_price,
+                            "delivery_price": prod_deliv_price,
+                            "pay_time": pay_time,
+                        }
+                        prod_orders.append(prod_order)
         return prod_orders
 
     def get(self, request):
         try:
             product_name = request.query_params["product"]
+            site_name = request.query_params["site"]
             date = request.query_params["date"]
             product = Product.objects.get(name=product_name)
             sales = Sale.objects.filter(product=product.pk, pay_time__date=date)
@@ -82,18 +86,22 @@ class Sales(APIView):
             raise NotFound
         # db에 저장되어 있는 데이터가 없을경우 imweb 데이터를 요청하고 해당데이터를 db에 저장한 후 response
         if sales.count() == 0:
-            results = self.imweb_api(date)
-            with transaction.atomic():
-                for result in results:
-                    product = Product.objects.get(name=result["name"])
-                    sale = Sale(
-                        product=product,
-                        count=result["count"],
-                        price=result["price"],
-                        delivery_price=result["delivery_price"],
-                        pay_time=result["pay_time"],
-                    )
-                    sale.save()
+            results = self.imweb_api(product, date, site_name)
+            if results:
+                with transaction.atomic():
+                    for result in results:
+                        product = Product.objects.get(name=result["name"])
+                        sale = Sale(
+                            product=product,
+                            count=result["count"],
+                            price=result["price"],
+                            delivery_price=result["delivery_price"],
+                            pay_time=result["pay_time"],
+                        )
+                        sale.save()
+                    serializer = SaleSerializer(sales, many=True)
+                    return Response(serializer.data)
+            else:
                 serializer = SaleSerializer(sales, many=True)
                 return Response(serializer.data)
         else:
