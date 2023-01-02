@@ -1,11 +1,11 @@
 from rest_framework.serializers import ModelSerializer
-from products.models import Product
+from sites.models import Site
 
 
-class ProductSerializer(ModelSerializer):
+class SiteSerializer(ModelSerializer):
     class Meta:
-        model = Product
+        model = Site
         fields = (
             "name",
-            "cost",
+            "url",
         )
