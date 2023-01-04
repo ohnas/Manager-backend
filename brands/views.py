@@ -1,9 +1,12 @@
+from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import NotFound
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.exceptions import NotFound, ParseError
 from brands.serializers import BrandSerializer, BrandDetailSerializer
 from brands.models import Brand
+from users.serializers import UserSerializer
+from users.models import User
 
 
 class Brands(APIView):
@@ -30,3 +33,26 @@ class BrandDetail(APIView):
         brand = self.get_object(brand_name)
         serializer = BrandDetailSerializer(brand)
         return Response(serializer.data)
+
+
+class CreateBrand(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        all_users = User.objects.all()
+        serializer = UserSerializer(all_users, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        name = request.data.get("name")
+        user = request.data.get("user")
+        if not name or not user:
+            raise ParseError
+        user = User.objects.get(pk=user)
+        serializer = BrandSerializer(data=request.data)
+        if serializer.is_valid():
+            with transaction.atomic():
+                brand = serializer.save(user=user)
+                serializer = BrandSerializer(brand)
+                return Response(serializer.data)

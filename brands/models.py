@@ -7,7 +7,7 @@ from common.models import CommonModel
 class Brand(CommonModel):
 
     name = models.CharField(max_length=150)
-    description = models.TextField(null=True)
+    description = models.TextField(null=True, blank=True)
     user = models.ForeignKey(to="users.User", on_delete=models.SET_NULL, null=True)
 
     def __str__(self) -> str:

@@ -10,4 +10,5 @@ class UserSerializer(ModelSerializer):
             "username",
             "name",
             "email",
+            "is_staff",
         )
