@@ -16,7 +16,7 @@ class Sales(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def imweb_api(self, product, date, site_name):
+    def imweb_api(self, product, date, site):
         # 프론트에서 입력받은 날짜를 stamptime으로 변경해서 검색하기
         order_date_from = date + " 00:00:00"
         order_date_from = time.mktime(
@@ -26,7 +26,7 @@ class Sales(APIView):
         order_date_to = time.mktime(
             datetime.strptime(order_date_to, "%Y-%m-%d %H:%M:%S").timetuple()
         )
-        site = Site.objects.get(name=site_name)
+        site = Site.objects.get(pk=site)
         KEY = site.api_key
         SECREAT = site.secret_key
         access_token = requests.get(
@@ -76,16 +76,16 @@ class Sales(APIView):
 
     def get(self, request):
         try:
-            product_name = request.query_params["product"]
-            site_name = request.query_params["site"]
+            product = request.query_params["product"]
+            site = request.query_params["site"]
             date = request.query_params["date"]
-            product = Product.objects.get(name=product_name)
-            sales = Sale.objects.filter(product=product.pk, pay_time__date=date)
+            product = Product.objects.get(pk=product)
+            sales = Sale.objects.filter(product=product, pay_time__date=date)
         except Product.DoesNotExist:
             raise NotFound
         # db에 저장되어 있는 데이터가 없을경우 imweb 데이터를 요청하고 해당데이터를 db에 저장한 후 response
         if sales.count() == 0:
-            results = self.imweb_api(product, date, site_name)
+            results = self.imweb_api(product, date, site)
             if results:
                 with transaction.atomic():
                     for result in results:
