@@ -6,4 +6,8 @@ from advertisings.models import Advertising
 
 @admin.register(Advertising)
 class AdvertisingAdmin(admin.ModelAdmin):
-    pass
+
+    list_display = (
+        "campaign_name",
+        "date",
+    )
