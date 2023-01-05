@@ -10,6 +10,7 @@ class AdvertisingSerializer(ModelSerializer):
     class Meta:
         model = Advertising
         fields = (
+            "site",
             "campaign_name",
             "reach",
             "impressions",
@@ -22,5 +23,5 @@ class AdvertisingSerializer(ModelSerializer):
             "purchase",
             "landing_page_view",
             "link_click",
-            "date",
+            "ad_date",
         )

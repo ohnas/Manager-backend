@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound
@@ -51,7 +52,14 @@ class Advertisings(APIView):
         )
         results = []
         for insight in insights:
-            website_ctr = insight["website_ctr"][0]
+            if insight.get("website_ctr") is None:
+                website_ctr = 0
+            else:
+                website_ctr = insight["website_ctr"][0]["value"]
+            if insight.get("purchase_roas") is None:
+                purchase_roas = 0
+            else:
+                purchase_roas = insight["purchase_roas"][0]["value"]
             actions = insight["actions"]
             purchase = 0
             landing_page_view = 0
@@ -73,13 +81,11 @@ class Advertisings(APIView):
                 "campaign_name": insight.get("campaign_name", 0),
                 "reach": insight.get("reach", 0),
                 "impressions": insight.get("impressions", 0),
+                "frequency": insight.get("frequency", 0),
                 "spend": insight.get("spend", 0),
                 "cpm": insight.get("cpm", 0),
-                "purchase_roas": insight.get("purchase_roas", 0),
-                "website_ctr": website_ctr.get("value", 0),
-                "cost_per_unique_inline_link_click": insight.get(
-                    "cost_per_unique_inline_link_click", 0
-                ),
+                "purchase_roas": purchase_roas,
+                "website_ctr": website_ctr,
                 "cost_per_unique_inline_link_click": insight.get(
                     "cost_per_unique_inline_link_click", 0
                 ),
@@ -101,7 +107,30 @@ class Advertisings(APIView):
         if advertisings.count() == 0:
             results = self.facebook_api(date, site)
             if results:
-                print(results)
+                with transaction.atomic():
+                    for result in results:
+                        advertising = Advertising(
+                            site=site,
+                            campaign_id=result["campaign_id"],
+                            campaign_name=result["campaign_name"],
+                            reach=result["reach"],
+                            impressions=result["impressions"],
+                            frequency=result["frequency"],
+                            spend=result["spend"],
+                            cpm=result["cpm"],
+                            purchase_roas=result["purchase_roas"],
+                            website_ctr=result["website_ctr"],
+                            cost_per_unique_inline_link_click=result[
+                                "cost_per_unique_inline_link_click"
+                            ],
+                            purchase=result["purchase"],
+                            landing_page_view=result["landing_page_view"],
+                            link_click=result["link_click"],
+                            ad_date=date,
+                        )
+                        advertising.save()
+                    serializer = AdvertisingSerializer(advertisings, many=True)
+                    return Response(serializer.data)
             else:
                 serializer = AdvertisingSerializer(advertisings, many=True)
                 return Response(serializer.data)
