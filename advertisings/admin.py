@@ -9,5 +9,5 @@ class AdvertisingAdmin(admin.ModelAdmin):
 
     list_display = (
         "campaign_name",
-        "date",
+        "ad_date",
     )

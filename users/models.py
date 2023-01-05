@@ -8,4 +8,4 @@ class User(AbstractUser):
 
     first_name = models.CharField(editable=False, max_length=150)
     last_name = models.CharField(editable=False, max_length=150)
-    name = models.CharField(max_length=150, default="")
+    name = models.CharField(max_length=150)

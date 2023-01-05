@@ -18,7 +18,7 @@ class Advertising(CommonModel):
     purchase = models.CharField(max_length=150)
     landing_page_view = models.CharField(max_length=150)
     link_click = models.CharField(max_length=150)
-    date = models.DateField()
+    ad_date = models.DateField()
 
     def __str__(self) -> str:
         return self.campaign_name
