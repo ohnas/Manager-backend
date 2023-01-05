@@ -14,5 +14,6 @@ class SaleSerializer(serializers.ModelSerializer):
             "count",
             "price",
             "delivery_price",
+            "order_time",
             "pay_time",
         )

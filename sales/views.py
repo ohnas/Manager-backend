@@ -7,8 +7,7 @@ from sales.models import Sale
 from sales.serializers import SaleSerializer
 from products.models import Product
 from sites.models import Site
-from datetime import datetime
-import time
+from datetime import datetime, timedelta
 import requests
 
 
@@ -17,15 +16,15 @@ class Sales(APIView):
     permission_classes = [IsAuthenticated]
 
     def imweb_api(self, product, date, site):
-        # 프론트에서 입력받은 날짜를 stamptime으로 변경해서 검색하기
+        # 프론트에서 입력받은 날짜를 stamptime(imweb date 검색 조건)으로 변경해서 검색하기
         order_date_from = date + " 00:00:00"
-        order_date_from = time.mktime(
-            datetime.strptime(order_date_from, "%Y-%m-%d %H:%M:%S").timetuple()
-        )
+        order_date_from = datetime.strptime(order_date_from, "%Y-%m-%d %H:%M:%S")
+        order_date_from = order_date_from + timedelta(hours=9)
+        order_date_from = round(order_date_from.timestamp())
         order_date_to = date + " 23:59:59"
-        order_date_to = time.mktime(
-            datetime.strptime(order_date_to, "%Y-%m-%d %H:%M:%S").timetuple()
-        )
+        order_date_to = datetime.strptime(order_date_to, "%Y-%m-%d %H:%M:%S")
+        order_date_to = order_date_to + timedelta(hours=9)
+        order_date_to = round(order_date_to.timestamp())
         site = Site.objects.get(pk=site)
         KEY = site.api_key
         SECREAT = site.secret_key
@@ -42,11 +41,19 @@ class Sales(APIView):
         sales = sales.json()
         sales = sales["data"]
         sales = sales["list"]
-        sales_order_no_list = []
+        sales_order_list = []
         for sale in sales:
-            sales_order_no_list.append(sale["order_no"])
+            order_time = sale["order_time"]
+            order_time = datetime.fromtimestamp(order_time)
+            sale_order_list = {
+                "order_no": sale["order_no"],
+                "order_time": order_time,
+            }
+            sales_order_list.append(sale_order_list)
         prod_orders = []
-        for order_no in sales_order_no_list:
+        for order in sales_order_list:
+            order_no = order["order_no"]
+            order_time = order["order_time"]
             prod_order = requests.get(
                 f"https://api.imweb.me/v2/shop/orders/{order_no}/prod-orders",
                 headers=headers,
@@ -56,19 +63,27 @@ class Sales(APIView):
             for prod in prod_order:
                 items = prod["items"]
                 pay_time = prod["pay_time"]
-                pay_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(pay_time))
+                pay_time = datetime.fromtimestamp(pay_time)
                 for item in items:
                     if product.name == item["prod_name"]:
                         prod_name = item["prod_name"]
                         payment = item["payment"]
-                        prod_count = payment["count"]
+                        if "count" in payment:
+                            prod_count = payment["count"]
+                        else:
+                            for option in item["options"]:
+                                option_item = option[0]
+                                payment = option_item["payment"]
+                                prod_count = payment["count"]
                         prod_price = payment["price"]
                         prod_deliv_price = payment["deliv_price"]
                         prod_order = {
+                            "order_no": order_no,
                             "name": prod_name,
                             "count": prod_count,
                             "price": prod_price,
                             "delivery_price": prod_deliv_price,
+                            "order_time": order_time,
                             "pay_time": pay_time,
                         }
                         prod_orders.append(prod_order)
@@ -80,7 +95,7 @@ class Sales(APIView):
             site = request.query_params["site"]
             date = request.query_params["date"]
             product = Product.objects.get(pk=product)
-            sales = Sale.objects.filter(product=product, pay_time__date=date)
+            sales = Sale.objects.filter(product=product, order_time__date=date)
         except Product.DoesNotExist:
             raise NotFound
         # db에 저장되어 있는 데이터가 없을경우 imweb 데이터를 요청하고 해당데이터를 db에 저장한 후 response
@@ -96,6 +111,8 @@ class Sales(APIView):
                             price=result["price"],
                             delivery_price=result["delivery_price"],
                             pay_time=result["pay_time"],
+                            order_no=result["order_no"],
+                            order_time=result["order_time"],
                         )
                         sale.save()
                     serializer = SaleSerializer(sales, many=True)

@@ -14,3 +14,5 @@ class Sale(CommonModel):
     price = models.PositiveIntegerField()
     delivery_price = models.PositiveIntegerField()
     pay_time = models.DateTimeField()
+    order_time = models.DateTimeField(null=True)
+    order_no = models.CharField(max_length=150, null=True)
