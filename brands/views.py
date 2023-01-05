@@ -14,6 +14,16 @@ class Brands(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        all_brands = Brand.objects.all()
+        serializer = BrandSerializer(all_brands, many=True)
+        return Response(serializer.data)
+
+
+class MyBrand(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
         brands = Brand.objects.filter(user=request.user.pk)
         serializer = BrandSerializer(brands, many=True)
         return Response(serializer.data)
