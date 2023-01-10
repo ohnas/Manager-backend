@@ -32,7 +32,7 @@ class CreateUser(APIView):
                 user = serializer.save()
                 user.set_password(password)
                 user.save()
-                return Response({"response": "success"}, status=status.HTTP_200_OK)
+                return Response(status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors)
 
@@ -44,7 +44,7 @@ class LogIn(APIView):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return Response({"response": "success"}, status=status.HTTP_200_OK)
+            return Response(status=status.HTTP_200_OK)
         else:
             raise ParseError
 
@@ -55,4 +55,4 @@ class LogOut(APIView):
 
     def post(self, request):
         logout(request)
-        return Response({"response": "success"}, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
