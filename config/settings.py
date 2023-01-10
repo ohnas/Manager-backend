@@ -146,6 +146,7 @@ AUTH_USER_MODEL = "users.User"
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
     "https://web-manager-frontend-4fuvwk25lcpo4p0w.gksl2.cloudtype.app",
+    "https://port-0-manager-backend-4fuvwk25lcpo4p0w.gksl2.cloudtype.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -153,6 +154,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5500",
     "https://web-manager-frontend-4fuvwk25lcpo4p0w.gksl2.cloudtype.app",
+    "https://port-0-manager-backend-4fuvwk25lcpo4p0w.gksl2.cloudtype.app",
 ]
 
 # COOKIE
