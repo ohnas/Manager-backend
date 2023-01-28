@@ -33,14 +33,14 @@ class BrandDetail(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, brand_name):
+    def get_object(self, pk):
         try:
-            return Brand.objects.get(name=brand_name)
+            return Brand.objects.get(pk=pk)
         except Brand.DoesNotExist:
             raise NotFound
 
-    def get(self, request, brand_name):
-        brand = self.get_object(brand_name)
+    def get(self, request, pk):
+        brand = self.get_object(pk)
         serializer = BrandDetailSerializer(brand)
         return Response(serializer.data)
 
