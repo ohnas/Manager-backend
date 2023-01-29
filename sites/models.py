@@ -5,6 +5,9 @@ from common.models import CommonModel
 
 
 class Site(CommonModel):
+    class SiteKindChoices(models.TextChoices):
+        SALE = ("sale_site", "Sale")
+        ADVERTISING = ("advertising_site", "Advertising")
 
     name = models.CharField(max_length=150)
     url = models.URLField()
@@ -12,6 +15,7 @@ class Site(CommonModel):
     api_key = models.CharField(max_length=150, null=True, blank=True)
     secret_key = models.CharField(max_length=150, null=True, blank=True)
     ad_account_id = models.CharField(max_length=150, null=True, blank=True)
+    kind = models.CharField(max_length=20, choices=SiteKindChoices.choices, null=True)
 
     def __str__(self) -> str:
         return self.name

@@ -9,4 +9,5 @@ class SiteSerializer(ModelSerializer):
             "pk",
             "name",
             "url",
+            "kind",
         )
