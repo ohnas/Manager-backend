@@ -1,11 +1,22 @@
 from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.exceptions import ParseError
 from products.serializers import ProductSerializer
+from products.models import Product
 from brands.models import Brand
 from brands.serializers import BrandSerializer
+
+
+class Products(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        all_products = Product.objects.all()
+        serializer = ProductSerializer(all_products, many=True)
+        return Response(serializer.data)
 
 
 class CreateProduct(APIView):
