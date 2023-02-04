@@ -6,6 +6,7 @@ from sites.models import Site
 from datetime import datetime
 import requests
 import time
+import pandas as pd
 
 
 class Sales(APIView):
@@ -19,13 +20,6 @@ class Sales(APIView):
         order_date_to = to_date + " 23:59:59"
         order_date_to = datetime.strptime(order_date_to, "%Y-%m-%d %H:%M:%S")
         order_date_to = round(order_date_to.timestamp())
-        # selected_date_from = datetime.strptime(from_date, "%Y-%m-%d")
-        # selected_date_to = datetime.strptime(to_date, "%Y-%m-%d")
-        # delta = timedelta(days=1)
-        # date_list = []
-        # while selected_date_from <= selected_date_to:
-        #     date_list.append(selected_date_from.strftime("%Y-%m-%d"))
-        #     selected_date_from += delta
         site = Site.objects.get(pk=site)
         KEY = site.api_key
         SECREAT = site.secret_key
@@ -93,7 +87,14 @@ class Sales(APIView):
                         "status": d["status"],
                         "pay_time": pay_time,
                         "prod_name": item["prod_name"],
-                        "payment": item["payment"],
+                        "price": item["payment"]["price"],
+                        "deliv_price": item["payment"]["deliv_price"],
+                        "island_price": item["payment"]["island_price"],
+                        "price_sale": item["payment"]["price_sale"],
+                        "point": float(item["payment"]["point"]),
+                        "coupon": item["payment"]["coupon"],
+                        "membership_discount": item["payment"]["membership_discount"],
+                        "period_discount": item["payment"]["period_discount"],
                         "option": item["options"][0][0]["value_name_list"][0],
                         "count": item["options"][0][0]["payment"]["count"],
                     }
@@ -109,7 +110,34 @@ class Sales(APIView):
             ):
                 modified_order_list.append(order)
 
-        return modified_order_list
+        df = pd.DataFrame.from_records(modified_order_list)
+        df = df[
+            [
+                "order_time",
+                "prod_name",
+                "price",
+                "deliv_price",
+                "island_price",
+                "price_sale",
+                "point",
+                "coupon",
+                "membership_discount",
+                "period_discount",
+                "option",
+                "count",
+            ]
+        ]
+
+        df = pd.DataFrame.pivot_table(
+            df,
+            index=["order_time", "prod_name", "option"],
+            aggfunc=sum,
+        )
+
+        order_dict = df.to_dict(orient="index")
+        print(order_dict)
+
+        return order_dict
 
     def get(self, request):
         try:
