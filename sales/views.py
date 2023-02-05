@@ -87,6 +87,7 @@ class Sales(APIView):
                         "status": d["status"],
                         "pay_time": pay_time,
                         "prod_name": item["prod_name"],
+                        "prod_count": 1,
                         "price": item["payment"]["price"],
                         "deliv_price": item["payment"]["deliv_price"],
                         "island_price": item["payment"]["island_price"],
@@ -111,17 +112,16 @@ class Sales(APIView):
                 modified_order_list.append(order)
 
         df = pd.DataFrame.from_records(modified_order_list)
-
-        prod_df = df[["order_time", "prod_name"]]
-        prod_df.loc[:, "count"] = 1
+        prod_df = df[["order_time", "prod_name", "prod_count"]]
         prod_df = pd.DataFrame.pivot_table(
             prod_df,
-            values="count",
+            values="prod_count",
             index=["order_time"],
             columns=["prod_name"],
             aggfunc=sum,
             fill_value=0,
         )
+        prod_dict = prod_df.to_dict(orient="index")
 
         option_df = df[
             [
@@ -138,6 +138,7 @@ class Sales(APIView):
             aggfunc=sum,
             fill_value=0,
         )
+        option_dict = option_df.to_dict(orient="index")
 
         payment_df = df[
             [
@@ -177,9 +178,13 @@ class Sales(APIView):
             },
             fill_value=0,
         )
+        payment_dict = payment_df.to_dict(orient="index")
 
-        total_df = pd.concat([prod_df, option_df, payment_df], axis=1)
-        order_dict = total_df.to_dict(orient="index")
+        order_dict = {
+            "product": prod_dict,
+            "option": option_dict,
+            "payment": payment_dict,
+        }
 
         return order_dict
 
