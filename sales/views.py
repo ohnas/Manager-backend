@@ -111,10 +111,37 @@ class Sales(APIView):
                 modified_order_list.append(order)
 
         df = pd.DataFrame.from_records(modified_order_list)
-        df = df[
+
+        prod_df = df[["order_time", "prod_name"]]
+        prod_df.loc[:, "count"] = 1
+        prod_df = pd.DataFrame.pivot_table(
+            prod_df,
+            values="count",
+            index=["order_time"],
+            columns=["prod_name"],
+            aggfunc=sum,
+            fill_value=0,
+        )
+
+        option_df = df[
             [
                 "order_time",
-                "prod_name",
+                "option",
+                "count",
+            ]
+        ]
+        option_df = pd.DataFrame.pivot_table(
+            option_df,
+            values="count",
+            index=["order_time"],
+            columns=["option"],
+            aggfunc=sum,
+            fill_value=0,
+        )
+
+        payment_df = df[
+            [
+                "order_time",
                 "price",
                 "deliv_price",
                 "island_price",
@@ -123,19 +150,36 @@ class Sales(APIView):
                 "coupon",
                 "membership_discount",
                 "period_discount",
-                "option",
-                "count",
             ]
         ]
-
-        df = pd.DataFrame.pivot_table(
-            df,
-            index=["order_time", "prod_name", "option"],
-            aggfunc=sum,
+        payment_df = pd.DataFrame.pivot_table(
+            payment_df,
+            index=["order_time"],
+            values=[
+                "price",
+                "deliv_price",
+                "island_price",
+                "price_sale",
+                "point",
+                "coupon",
+                "membership_discount",
+                "period_discount",
+            ],
+            aggfunc={
+                "price": sum,
+                "deliv_price": sum,
+                "island_price": sum,
+                "price_sale": sum,
+                "point": sum,
+                "coupon": sum,
+                "membership_discount": sum,
+                "period_discount": sum,
+            },
+            fill_value=0,
         )
 
-        order_dict = df.to_dict(orient="index")
-        print(order_dict)
+        total_df = pd.concat([prod_df, option_df, payment_df], axis=1)
+        order_dict = total_df.to_dict(orient="index")
 
         return order_dict
 
