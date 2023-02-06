@@ -10,6 +10,7 @@ class Product(CommonModel):
     brand = models.ForeignKey(to="brands.Brand", on_delete=models.CASCADE)
     cost = models.PositiveIntegerField(default=0)
     delivery_price = models.PositiveIntegerField(default=0)
+    english_name = models.CharField(max_length=200, default="")
 
     def __str__(self) -> str:
         return self.name
