@@ -28,5 +28,6 @@ class ProductSerializer(ModelSerializer):
             "pk",
             "name",
             "cost",
+            "english_name",
             "options_set",
         )
