@@ -8,6 +8,7 @@ from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.adsinsights import AdsInsights
 from facebook_business.api import FacebookAdsApi
 from datetime import datetime, timedelta
+import requests
 
 # Create your views here.
 
@@ -29,8 +30,8 @@ class Advertisings(APIView):
             AdsInsights.Field.frequency,  # 빈도- 일치확인완료
             AdsInsights.Field.spend,  # 지출금액- 일치확인완료
             AdsInsights.Field.cpm,  # CPM(1,000회 노출당 비용)- 일치확인완료
-            AdsInsights.Field.purchase_roas,  # 구매 roas- 일치확인완료
             AdsInsights.Field.website_ctr,  # CTR(링크 클릭률)-일치확인완료
+            AdsInsights.Field.purchase_roas,  # 구매 roas- 일치확인완료
             AdsInsights.Field.cost_per_unique_inline_link_click,  # CPC(링크 클릭당 비용)-일치확인완료
             AdsInsights.Field.actions,
             # 구매항목은 actions 항목 중 "action_type":"purchase"의 value 값
@@ -40,7 +41,6 @@ class Advertisings(APIView):
             # 장바구니 항목은 actions 항목 중 "action_type":"add_to_cart" 의 value 값
             AdsInsights.Field.adset_name,  # 광고세트 이름
         ]
-
         selected_date_from = datetime.strptime(from_date, "%Y-%m-%d")
         selected_date_to = datetime.strptime(to_date, "%Y-%m-%d")
         delta = timedelta(days=1)
@@ -60,6 +60,11 @@ class Advertisings(APIView):
                 params=params,
                 fields=insight_fields,
             )
+            exchange_rate_api = requests.get(
+                f"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/{date}/currencies/usd/krw.json"
+            )
+            exchange_rate_api = exchange_rate_api.json()
+            krw = round(exchange_rate_api["krw"], 2)
             for insight in insights:
                 if insight.get("website_ctr") is None:
                     website_ctr = 0
@@ -112,6 +117,7 @@ class Advertisings(APIView):
                         "link_click": int(link_click),
                         "add_payment_info": int(add_payment_info),
                         "add_to_cart": int(add_to_cart),
+                        "krw": krw,
                     }
                 }
         return advertisings_dict
