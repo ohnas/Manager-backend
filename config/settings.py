@@ -43,13 +43,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
-    "sales.apps.SalesConfig",
     "common.apps.CommonConfig",
     "users.apps.UsersConfig",
-    "advertisings.apps.AdvertisingsConfig",
     "brands.apps.BrandsConfig",
     "products.apps.ProductsConfig",
     "sites.apps.SitesConfig",
+    "retrieves.apps.RetrievesConfig",
 ]
 
 MIDDLEWARE = [
