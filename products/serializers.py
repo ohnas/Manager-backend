@@ -27,7 +27,12 @@ class ProductSerializer(ModelSerializer):
         fields = (
             "pk",
             "name",
-            "cost",
             "english_name",
+            "price",
+            "delivery_price",
+            "cost",
+            "logistic_fee",
+            "quantity",
+            "gift_quantity",
             "options_set",
         )

@@ -7,10 +7,14 @@ from common.models import CommonModel
 class Product(CommonModel):
 
     name = models.CharField(max_length=200)
+    english_name = models.CharField(max_length=200, default="")
     brand = models.ForeignKey(to="brands.Brand", on_delete=models.CASCADE)
+    price = models.PositiveIntegerField(default=0)
     cost = models.PositiveIntegerField(default=0)
     delivery_price = models.PositiveIntegerField(default=0)
-    english_name = models.CharField(max_length=200, default="")
+    logistic_fee = models.PositiveIntegerField(default=0)
+    quantity = models.PositiveIntegerField(default=0)
+    gift_quantity = models.PositiveIntegerField(default=0, null=True, blank=True)
 
     def __str__(self) -> str:
         return self.name
@@ -24,7 +28,7 @@ class Options(CommonModel):
     cost = models.PositiveIntegerField()
     logistic_fee = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField()
-    gift_quantity = models.PositiveIntegerField(null=True, blank=True)
+    gift_quantity = models.PositiveIntegerField(default=0, null=True, blank=True)
 
     def __str__(self) -> str:
         return self.name
