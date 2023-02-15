@@ -10,7 +10,6 @@ class OptionsSerializer(ModelSerializer):
             "name",
             "product",
             "price",
-            "cost",
             "logistic_fee",
             "quantity",
             "gift_quantity",

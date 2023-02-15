@@ -24,7 +24,6 @@ class Options(CommonModel):
     name = models.CharField(max_length=200)
     product = models.ForeignKey(to="products.Product", on_delete=models.CASCADE)
     price = models.PositiveIntegerField()
-    cost = models.PositiveIntegerField()
     logistic_fee = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField()
     gift_quantity = models.PositiveIntegerField(default=0, null=True, blank=True)
