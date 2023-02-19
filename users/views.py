@@ -19,6 +19,9 @@ class UserProfile(APIView):
 
 
 class CreateUser(APIView):
+
+    # to-do : user 의 is_active 을 활용해서 첫 회원가입시 is_active의 값을 false로 설정하고 관리자 페이지에서 관리자가 true로 변경해야지만 웹사이트 활동 가능하게 로직구현
+    # 그리고 관리자 페이지에서 알수없는 사용자가 가입하였을 경우에는 관리자가 삭제 해서 웹사이트 접속자체를 할 수 없도록 구현하기
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")

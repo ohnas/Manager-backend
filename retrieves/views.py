@@ -356,26 +356,26 @@ class Retrieves(APIView):
                     "add_to_cart": int(add_to_cart),
                 }
                 advertisings_list.append(advertisings)
-            df = pd.DataFrame.from_records(advertisings_list)
-            campaigns_df = df[
-                [
-                    "date",
-                    "campaign_name",
-                    "reach",
-                    "impressions",
-                    "frequency",
-                    "spend",
-                    "cpm",
-                    "website_ctr",
-                    "purchase_roas",
-                    "cost_per_unique_inline_link_click",
-                    "purchase",
-                    "landing_page_view",
-                    "link_click",
-                    "add_payment_info",
-                    "add_to_cart",
-                ]
+        df = pd.DataFrame.from_records(advertisings_list)
+        campaigns_df = df[
+            [
+                "date",
+                "campaign_name",
+                "reach",
+                "impressions",
+                "frequency",
+                "spend",
+                "cpm",
+                "website_ctr",
+                "purchase_roas",
+                "cost_per_unique_inline_link_click",
+                "purchase",
+                "landing_page_view",
+                "link_click",
+                "add_payment_info",
+                "add_to_cart",
             ]
+        ]
         brand = Brand.objects.get(pk=brand)
         products = brand.product_set.all()
         prod_list = []
