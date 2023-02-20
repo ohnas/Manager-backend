@@ -10,6 +10,7 @@ class BrandSerializer(ModelSerializer):
         fields = (
             "pk",
             "name",
+            "description",
         )
 
 
