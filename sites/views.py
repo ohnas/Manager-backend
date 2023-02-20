@@ -21,9 +21,10 @@ class CreateSite(APIView):
         name = request.data.get("name")
         url = request.data.get("url")
         brand = request.data.get("brand")
-        api_key = request.data.get("api_key")
-        secret_key = request.data.get("secret_key")
-        ad_account_id = request.data.get("ad_account_id")
+        api_key = request.data.get("apiKey")
+        secret_key = request.data.get("secretKey")
+        ad_account_id = request.data.get("adAccountId")
+        kind = request.data.get("kind")
         if not name or not url or not brand:
             raise ParseError
         brand = Brand.objects.get(pk=brand)
@@ -35,6 +36,9 @@ class CreateSite(APIView):
                     api_key=api_key,
                     secret_key=secret_key,
                     ad_account_id=ad_account_id,
+                    kind=kind,
                 )
                 serializer = SiteSerializer(site)
                 return Response(serializer.data)
+        else:
+            return Response(serializer.errors)

@@ -66,3 +66,5 @@ class CreateBrand(APIView):
                 brand = serializer.save(user=user)
                 serializer = BrandSerializer(brand)
                 return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
