@@ -6,7 +6,7 @@ from common.models import CommonModel
 
 class Product(CommonModel):
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     brand = models.ForeignKey(to="brands.Brand", on_delete=models.CASCADE)
     price = models.PositiveIntegerField(default=0)
     cost = models.PositiveIntegerField(default=0)
@@ -21,7 +21,7 @@ class Product(CommonModel):
 
 class Options(CommonModel):
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     product = models.ForeignKey(to="products.Product", on_delete=models.CASCADE)
     price = models.PositiveIntegerField()
     logistic_fee = models.PositiveIntegerField()
