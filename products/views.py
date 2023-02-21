@@ -3,10 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 from rest_framework.exceptions import ParseError
-from products.serializers import ProductSerializer
+from brands.serializers import BrandSerializer
+from products.serializers import ProductSerializer, OptionsSerializer
 from products.models import Product
 from brands.models import Brand
-from brands.serializers import BrandSerializer
 
 
 class CreateProduct(APIView):
@@ -21,8 +21,10 @@ class CreateProduct(APIView):
     def post(self, request):
         name = request.data.get("name")
         cost = request.data.get("cost")
+        price = request.data.get("price")
+        delivery_price = request.data.get("delivery_price")
         brand = request.data.get("brand")
-        if not name or not cost or not brand:
+        if not name or not cost or not brand or not delivery_price or not price:
             raise ParseError
         brand = Brand.objects.get(pk=brand)
         serializer = ProductSerializer(data=request.data)
@@ -31,3 +33,41 @@ class CreateProduct(APIView):
                 product = serializer.save(brand=brand)
                 serializer = ProductSerializer(product)
                 return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+
+class CreateOption(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        all_products = Product.objects.all()
+        serializer = ProductSerializer(all_products, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        name = request.data.get("name")
+        price = request.data.get("price")
+        logistic_fee = request.data.get("logistic_fee")
+        quantity = request.data.get("quantity")
+        gift_quantity = request.data.get("gift_quantity")
+        product = request.data.get("product")
+        if (
+            not name
+            or not price
+            or not logistic_fee
+            or not quantity
+            or not gift_quantity
+            or not product
+        ):
+            raise ParseError
+        product = Product.objects.get(pk=product)
+        serializer = OptionsSerializer(data=request.data)
+        if serializer.is_valid():
+            with transaction.atomic():
+                option = serializer.save(product=product)
+                serializer = OptionsSerializer(option)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
