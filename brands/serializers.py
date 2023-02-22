@@ -1,16 +1,21 @@
 from rest_framework.serializers import ModelSerializer
 from brands.models import Brand
+from users.serializers import UserSerializer
 from products.serializers import ProductSerializer
 from sites.serializers import SiteSerializer
 
 
 class BrandSerializer(ModelSerializer):
+
+    user = UserSerializer(read_only=True)
+
     class Meta:
         model = Brand
         fields = (
             "pk",
             "name",
             "description",
+            "user",
         )
 
 

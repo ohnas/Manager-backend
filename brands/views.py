@@ -89,13 +89,24 @@ class UpdateBrand(APIView):
     def put(self, request, pk):
         brand = self.get_object(pk)
         serializer = BrandSerializer(brand, data=request.data, partial=True)
-        if serializer.is_valid():
-            with transaction.atomic():
-                brand = serializer.save()
-                serializer = BrandSerializer(brand)
-                return Response(serializer.data)
+        user = request.data.get("user")
+        if user is None:
+            if serializer.is_valid():
+                with transaction.atomic():
+                    brand = serializer.save()
+                    serializer = BrandSerializer(brand)
+                    return Response(serializer.data)
+            else:
+                return Response(serializer.errors)
         else:
-            return Response(serializer.errors)
+            user = User.objects.get(pk=user)
+            if serializer.is_valid():
+                with transaction.atomic():
+                    brand = serializer.save(user=user)
+                    serializer = BrandSerializer(brand)
+                    return Response(serializer.data)
+            else:
+                return Response(serializer.errors)
 
     def delete(self, request, pk):
         brand = self.get_object(pk)
