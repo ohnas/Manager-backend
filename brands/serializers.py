@@ -25,6 +25,7 @@ class BrandDetailSerializer(ModelSerializer):
         fields = (
             "pk",
             "name",
+            "description",
             "product_set",
             "site_set",
         )

@@ -68,3 +68,30 @@ class CreateBrand(APIView):
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class UpdateBrand(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get_object(self, pk):
+        try:
+            return Brand.objects.get(pk=pk)
+        except Brand.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        brand = self.get_object(pk)
+        serializer = BrandSerializer(brand)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        brand = self.get_object(pk)
+        serializer = BrandSerializer(brand, data=request.data, partial=True)
+        if serializer.is_valid():
+            with transaction.atomic():
+                brand = serializer.save()
+                serializer = BrandSerializer(brand)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
