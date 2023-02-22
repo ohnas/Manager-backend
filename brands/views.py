@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.exceptions import NotFound, ParseError
+from rest_framework import status
 from brands.serializers import BrandSerializer, BrandDetailSerializer
 from brands.models import Brand
 from users.serializers import UserSerializer
@@ -95,3 +96,8 @@ class UpdateBrand(APIView):
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+    def delete(self, request, pk):
+        brand = self.get_object(pk)
+        brand.delete()
+        return Response(status=status.HTTP_200_OK)
