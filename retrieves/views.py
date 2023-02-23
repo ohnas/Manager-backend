@@ -249,11 +249,21 @@ class Retrieves(APIView):
             fill_value=0,
         )
         by_date_payment_dict = by_date_payment_df.to_dict(orient="index")
+        total_order_df = df[["order_time", "prod_count"]]
+        total_order_df = pd.DataFrame.pivot_table(
+            total_order_df,
+            index=["order_time"],
+            values=["prod_count"],
+            aggfunc={"prod_count": sum},
+            fill_value=0,
+        )
+        total_order_dict = total_order_df.to_dict(orient="index")
         imweb_order_dict = {
             "products": products_dict,
             "options": options_dict,
             "by_products_payment": by_products_payment_dict,
             "by_date_payment": by_date_payment_dict,
+            "total_order": total_order_dict,
         }
 
         return imweb_order_dict
