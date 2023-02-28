@@ -9,6 +9,16 @@ from products.models import Product
 from brands.models import Brand
 
 
+class Products(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        all_products = Product.objects.all()
+        serializer = ProductSerializer(all_products, many=True)
+        return Response(serializer.data)
+
+
 class CreateProduct(APIView):
 
     permission_classes = [IsAdminUser]
