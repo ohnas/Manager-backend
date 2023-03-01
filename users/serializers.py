@@ -10,5 +10,6 @@ class UserSerializer(ModelSerializer):
             "username",
             "name",
             "email",
+            "is_active",
             "is_staff",
         )

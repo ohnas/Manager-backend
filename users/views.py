@@ -3,9 +3,20 @@ from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework import status
+from users.models import User
 from users.serializers import UserSerializer
+
+
+class Users(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        all_users = User.objects.all()
+        serializer = UserSerializer(all_users, many=True)
+        return Response(serializer.data)
 
 
 class UserProfile(APIView):

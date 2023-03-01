@@ -2,9 +2,13 @@ from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
-from rest_framework.exceptions import ParseError
+from rest_framework.exceptions import ParseError, NotFound
 from brands.serializers import BrandSerializer
-from products.serializers import ProductSerializer, OptionsSerializer
+from products.serializers import (
+    ProductSerializer,
+    OptionsSerializer,
+    ProductDetailSerializer,
+)
 from products.models import Product
 from brands.models import Brand
 
@@ -45,6 +49,44 @@ class CreateProduct(APIView):
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class UpdateProduct(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get_object(self, pk):
+        try:
+            return Product.objects.get(pk=pk)
+        except Product.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        product = self.get_object(pk)
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+
+    # def put(self, request, pk):
+    #     product = self.get_object(pk)
+    #     serializer = BrandSerializer(brand, data=request.data, partial=True)
+    #     user = request.data.get("user")
+    #     if user is None:
+    #         if serializer.is_valid():
+    #             with transaction.atomic():
+    #                 brand = serializer.save()
+    #                 serializer = BrandSerializer(brand)
+    #                 return Response(serializer.data)
+    #         else:
+    #             return Response(serializer.errors)
+    #     else:
+    #         user = User.objects.get(pk=user)
+    #         if serializer.is_valid():
+    #             with transaction.atomic():
+    #                 brand = serializer.save(user=user)
+    #                 serializer = BrandSerializer(brand)
+    #                 return Response(serializer.data)
+    #         else:
+    #             return Response(serializer.errors)
 
 
 class CreateOption(APIView):
