@@ -20,6 +20,15 @@ class OptionsSerializer(ModelSerializer):
         fields = (
             "pk",
             "name",
+        )
+
+
+class OptionDetailSerializer(ModelSerializer):
+    class Meta:
+        model = Options
+        fields = (
+            "pk",
+            "name",
             "price",
             "logistic_fee",
             "quantity",
@@ -49,7 +58,7 @@ class ProductSerializer(ModelSerializer):
 class ProductDetailSerializer(ModelSerializer):
 
     # Reverse serializer(without related_name, _set: defalut name)
-    options_set = OptionsSerializer(many=True, read_only=True)
+    options_set = OptionDetailSerializer(many=True, read_only=True)
 
     class Meta:
         model = Product
