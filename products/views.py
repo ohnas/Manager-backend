@@ -4,8 +4,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 from rest_framework.exceptions import ParseError, NotFound
 from brands.serializers import BrandSerializer
-from products.serializers import ProductSerializer, OptionsSerializer
-from products.models import Product
+from products.serializers import (
+    ProductSerializer,
+    OptionsSerializer,
+    OptionDetailSerializer,
+)
+from products.models import Product, Options
 from brands.models import Brand
 
 
@@ -85,6 +89,16 @@ class UpdateProduct(APIView):
                 return Response(serializer.errors)
 
 
+class Option(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        all_options = Options.objects.all()
+        serializer = OptionsSerializer(all_options, many=True)
+        return Response(serializer.data)
+
+
 class CreateOption(APIView):
 
     permission_classes = [IsAdminUser]
@@ -111,11 +125,11 @@ class CreateOption(APIView):
         ):
             raise ParseError
         product = Product.objects.get(pk=product)
-        serializer = OptionsSerializer(data=request.data)
+        serializer = OptionDetailSerializer(data=request.data)
         if serializer.is_valid():
             with transaction.atomic():
                 option = serializer.save(product=product)
-                serializer = OptionsSerializer(option)
+                serializer = OptionDetailSerializer(option)
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
