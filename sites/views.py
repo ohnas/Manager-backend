@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError, NotFound
+from rest_framework import status
 from brands.models import Brand
 from sites.models import Site
 from products.serializers import TinyBrandSerializer
@@ -90,3 +91,8 @@ class UpdateSite(APIView):
                     return Response(serializer.data)
             else:
                 return Response(serializer.errors)
+
+    def delete(self, request, pk):
+        site = self.get_object(pk)
+        site.delete()
+        return Response(status=status.HTTP_200_OK)

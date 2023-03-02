@@ -2,7 +2,7 @@ from django.db import transaction
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ParseError
+from rest_framework.exceptions import ParseError, NotFound
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework import status
 from users.models import User
@@ -43,12 +43,54 @@ class CreateUser(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             with transaction.atomic():
-                user = serializer.save()
+                user = serializer.save(is_active=False)
                 user.set_password(password)
                 user.save()
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class InactiveUser(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        inactive_user = User.objects.filter(is_active=False)
+        serializer = UserSerializer(inactive_user, many=True)
+        return Response(serializer.data)
+
+
+class UpdateUser(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        user = self.get_object(pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        user = self.get_object(pk)
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            with transaction.atomic():
+                user = serializer.save()
+                serializer = UserSerializer(user)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
+    def delete(self, request, pk):
+        user = self.get_object(pk)
+        user.delete()
+        return Response(status=status.HTTP_200_OK)
 
 
 class LogIn(APIView):

@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 from rest_framework.exceptions import ParseError, NotFound
+from rest_framework import status
 from products.serializers import (
     ProductSerializer,
     OptionsSerializer,
@@ -88,6 +89,11 @@ class UpdateProduct(APIView):
             else:
                 return Response(serializer.errors)
 
+    def delete(self, request, pk):
+        product = self.get_object(pk)
+        product.delete()
+        return Response(status=status.HTTP_200_OK)
+
 
 class Option(APIView):
 
@@ -171,3 +177,8 @@ class UpdateOption(APIView):
                     return Response(serializer.data)
             else:
                 return Response(serializer.errors)
+
+    def delete(self, request, pk):
+        option = self.get_object(pk)
+        option.delete()
+        return Response(status=status.HTTP_200_OK)
