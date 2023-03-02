@@ -3,8 +3,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 from rest_framework.exceptions import ParseError, NotFound
-from brands.serializers import BrandSerializer
-from products.serializers import ProductSerializer, OptionsSerializer
+from products.serializers import (
+    ProductSerializer,
+    OptionsSerializer,
+    TinyBrandSerializer,
+    TinyProductSerializer,
+)
 from products.models import Product, Options
 from brands.models import Brand
 
@@ -25,7 +29,7 @@ class CreateProduct(APIView):
 
     def get(self, request):
         all_brands = Brand.objects.all()
-        serializer = BrandSerializer(all_brands, many=True)
+        serializer = TinyBrandSerializer(all_brands, many=True)
         return Response(serializer.data)
 
     def post(self, request):
@@ -101,7 +105,7 @@ class CreateOption(APIView):
 
     def get(self, request):
         all_products = Product.objects.all()
-        serializer = ProductSerializer(all_products, many=True)
+        serializer = TinyProductSerializer(all_products, many=True)
         return Response(serializer.data)
 
     def post(self, request):

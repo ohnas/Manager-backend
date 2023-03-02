@@ -2,10 +2,21 @@ from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
-from rest_framework.exceptions import ParseError
+from rest_framework.exceptions import ParseError, NotFound
 from brands.models import Brand
-from brands.serializers import BrandSerializer
+from sites.models import Site
+from products.serializers import TinyBrandSerializer
 from sites.serializers import SiteSerializer
+
+
+class Sites(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        all_site = Site.objects.all()
+        serializer = SiteSerializer(all_site, many=True)
+        return Response(serializer.data)
 
 
 class CreateSite(APIView):
@@ -14,7 +25,7 @@ class CreateSite(APIView):
 
     def get(self, request):
         all_brands = Brand.objects.all()
-        serializer = BrandSerializer(all_brands, many=True)
+        serializer = TinyBrandSerializer(all_brands, many=True)
         return Response(serializer.data)
 
     def post(self, request):
@@ -41,3 +52,41 @@ class CreateSite(APIView):
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class UpdateSite(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get_object(self, pk):
+        try:
+            return Site.objects.get(pk=pk)
+        except Site.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        site = self.get_object(pk)
+        serializer = SiteSerializer(site)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        site = self.get_object(pk)
+        serializer = SiteSerializer(site, data=request.data, partial=True)
+        brand = request.data.get("brand")
+        if brand is None:
+            if serializer.is_valid():
+                with transaction.atomic():
+                    site = serializer.save()
+                    serializer = SiteSerializer(site)
+                    return Response(serializer.data)
+            else:
+                return Response(serializer.errors)
+        else:
+            brand = Brand.objects.get(pk=brand)
+            if serializer.is_valid():
+                with transaction.atomic():
+                    site = serializer.save(brand=brand)
+                    serializer = SiteSerializer(site)
+                    return Response(serializer.data)
+            else:
+                return Response(serializer.errors)
