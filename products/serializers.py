@@ -14,12 +14,29 @@ class TinyBrandSerializer(ModelSerializer):
         )
 
 
+class TinyProductSerializer(ModelSerializer):
+    class Meta:
+        model = Product
+        fields = (
+            "pk",
+            "name",
+        )
+
+
 class OptionsSerializer(ModelSerializer):
+
+    product = TinyProductSerializer(read_only=True)
+
     class Meta:
         model = Options
         fields = (
             "pk",
             "name",
+            "price",
+            "logistic_fee",
+            "quantity",
+            "gift_quantity",
+            "product",
         )
 
 

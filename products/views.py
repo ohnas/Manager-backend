@@ -4,11 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 from rest_framework.exceptions import ParseError, NotFound
 from brands.serializers import BrandSerializer
-from products.serializers import (
-    ProductSerializer,
-    OptionsSerializer,
-    OptionDetailSerializer,
-)
+from products.serializers import ProductSerializer, OptionsSerializer
 from products.models import Product, Options
 from brands.models import Brand
 
@@ -125,11 +121,49 @@ class CreateOption(APIView):
         ):
             raise ParseError
         product = Product.objects.get(pk=product)
-        serializer = OptionDetailSerializer(data=request.data)
+        serializer = OptionsSerializer(data=request.data)
         if serializer.is_valid():
             with transaction.atomic():
                 option = serializer.save(product=product)
-                serializer = OptionDetailSerializer(option)
+                serializer = OptionsSerializer(option)
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class UpdateOption(APIView):
+
+    permission_classes = [IsAdminUser]
+
+    def get_object(self, pk):
+        try:
+            return Options.objects.get(pk=pk)
+        except Options.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        option = self.get_object(pk)
+        serializer = OptionsSerializer(option)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        option = self.get_object(pk)
+        serializer = OptionsSerializer(option, data=request.data, partial=True)
+        product = request.data.get("product")
+        if product is None:
+            if serializer.is_valid():
+                with transaction.atomic():
+                    option = serializer.save()
+                    serializer = OptionsSerializer(option)
+                    return Response(serializer.data)
+            else:
+                return Response(serializer.errors)
+        else:
+            product = Product.objects.get(pk=product)
+            if serializer.is_valid():
+                with transaction.atomic():
+                    option = serializer.save(product=product)
+                    serializer = OptionsSerializer(option)
+                    return Response(serializer.data)
+            else:
+                return Response(serializer.errors)
