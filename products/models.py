@@ -30,3 +30,13 @@ class Options(CommonModel):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Event(CommonModel):
+
+    name = models.CharField(max_length=200, unique=True)
+    product = models.ForeignKey(to="products.Product", on_delete=models.CASCADE)
+    event_date = models.DateField()
+
+    def __str__(self) -> str:
+        return self.name
