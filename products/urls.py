@@ -6,6 +6,7 @@ from products.views import (
     UpdateProduct,
     Option,
     UpdateOption,
+    Events,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path("options", Option.as_view()),
     path("create/option", CreateOption.as_view()),
     path("update/option/<int:pk>", UpdateOption.as_view()),
+    path("event", Events.as_view()),
 ]

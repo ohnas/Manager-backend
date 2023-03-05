@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from products.models import Product, Options
+from products.models import Product, Options, Event
 from brands.models import Brand
 
 # brand 관련 serializer 가 product 쪽에 기재된 이유는:
@@ -20,6 +20,20 @@ class TinyProductSerializer(ModelSerializer):
         fields = (
             "pk",
             "name",
+        )
+
+
+class EventSerializer(ModelSerializer):
+
+    product = TinyProductSerializer(read_only=True)
+
+    class Meta:
+        model = Event
+        fields = (
+            "pk",
+            "name",
+            "event_date",
+            "product",
         )
 
 

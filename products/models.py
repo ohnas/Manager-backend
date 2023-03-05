@@ -34,7 +34,7 @@ class Options(CommonModel):
 
 class Event(CommonModel):
 
-    name = models.CharField(max_length=200, unique=True)
+    name = models.CharField(max_length=200)
     product = models.ForeignKey(to="products.Product", on_delete=models.CASCADE)
     event_date = models.DateField()
 
