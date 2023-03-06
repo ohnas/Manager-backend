@@ -25,6 +25,7 @@ class TinyProductSerializer(ModelSerializer):
 
 class EventSerializer(ModelSerializer):
 
+    brand = TinyBrandSerializer(read_only=True)
     product = TinyProductSerializer(read_only=True)
 
     class Meta:
@@ -33,6 +34,7 @@ class EventSerializer(ModelSerializer):
             "pk",
             "name",
             "event_date",
+            "brand",
             "product",
         )
 
