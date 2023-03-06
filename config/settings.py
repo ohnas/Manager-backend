@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "products.apps.ProductsConfig",
     "sites.apps.SitesConfig",
     "retrieves.apps.RetrievesConfig",
+    "events.apps.EventsConfig",
 ]
 
 MIDDLEWARE = [

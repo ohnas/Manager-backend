@@ -1,5 +1,5 @@
 from django.contrib import admin
-from products.models import Product, Options, Event
+from products.models import Product, Options
 
 # Register your models here.
 
@@ -11,9 +11,4 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Options)
 class OptionsAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(Event)
-class EventAdmin(admin.ModelAdmin):
     pass

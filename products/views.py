@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 from rest_framework.exceptions import ParseError, NotFound
 from rest_framework import status
 from products.serializers import (
@@ -9,22 +9,9 @@ from products.serializers import (
     OptionsSerializer,
     TinyBrandSerializer,
     TinyProductSerializer,
-    EventSerializer,
 )
-from products.models import Product, Options, Event
+from products.models import Product, Options
 from brands.models import Brand
-
-
-class Events(APIView):
-
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        from_date = request.query_params["dateFrom"]
-        to_date = request.query_params["dateTo"]
-        events = Event.objects.filter(event_date__range=(from_date, to_date))
-        serializer = EventSerializer(events, many=True)
-        return Response(serializer.data)
 
 
 class Products(APIView):

@@ -9,12 +9,13 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ("products", "0001_initial"),
         ("brands", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="Site",
+            name="Event",
             fields=[
                 (
                     "id",
@@ -27,29 +28,19 @@ class Migration(migrations.Migration):
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("name", models.CharField(max_length=150)),
-                ("url", models.URLField()),
-                ("api_key", models.CharField(blank=True, max_length=150, null=True)),
-                ("secret_key", models.CharField(blank=True, max_length=150, null=True)),
-                (
-                    "ad_account_id",
-                    models.CharField(blank=True, max_length=150, null=True),
-                ),
-                (
-                    "kind",
-                    models.CharField(
-                        choices=[
-                            ("sale_site", "Sale"),
-                            ("advertising_site", "Advertising"),
-                        ],
-                        max_length=20,
-                        null=True,
-                    ),
-                ),
+                ("name", models.CharField(max_length=200)),
+                ("event_date", models.DateField()),
                 (
                     "brand",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE, to="brands.brand"
+                    ),
+                ),
+                (
+                    "product",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="products.product",
                     ),
                 ),
             ],
