@@ -24,4 +24,6 @@ urlpatterns = [
     path("api/v1/sites/", include("sites.urls")),
     path("api/v1/retrieves/", include("retrieves.urls")),
     path("api/v1/events/", include("events.urls")),
+    path("api/v1/pages/", include("pages.urls")),
+    path("api/v1/visits/", include("visits.urls")),
 ]
