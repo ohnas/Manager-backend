@@ -3,8 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound, ParseError
+from rest_framework import status
 from brands.models import Brand
 from products.models import Product
+from events.models import Event
 from events.serializers import EventSerializer
 
 # Create your views here.
@@ -58,3 +60,24 @@ class CreateEvent(APIView):
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class UpdateEvent(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Event.objects.get(pk=pk)
+        except Event.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        event = self.get_object(pk)
+        serializer = EventSerializer(event)
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        event = self.get_object(pk)
+        event.delete()
+        return Response(status=status.HTTP_200_OK)
