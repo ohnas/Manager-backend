@@ -30,7 +30,10 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["Manager-backend-dev.ap-northeast-2.elasticbeanstalk.com"]
+ALLOWED_HOSTS = [
+    "Manager-backend-dev.ap-northeast-2.elasticbeanstalk.com",
+    "backend.managertestapp.com",
+]
 
 # Application definition
 
@@ -144,17 +147,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.User"
 
-CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5500",
-    "http://127.0.0.1:3000",
-]
+CORS_ALLOWED_ORIGINS = []
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:5500",
-    "http://127.0.0.1:3000",
-]
+CSRF_TRUSTED_ORIGINS = []
 
 # COOKIE
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
