@@ -93,17 +93,16 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-if "RDS_HOSTNAME" in env:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": env("RDS_DB_NAME"),
-            "USER": env("RDS_USERNAME"),
-            "PASSWORD": env("RDS_PASSWORD"),
-            "HOST": env("RDS_HOSTNAME"),
-            "PORT": env("RDS_PORT"),
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": env("RDS_DB_NAME"),
+        "USER": env("RDS_USERNAME"),
+        "PASSWORD": env("RDS_PASSWORD"),
+        "HOST": env("RDS_HOSTNAME"),
+        "PORT": env("RDS_PORT"),
     }
+}
 
 
 # Password validation
