@@ -33,7 +33,7 @@ DEBUG = False
 ALLOWED_HOSTS = [
     "Manager-backend-dev.ap-northeast-2.elasticbeanstalk.com",
     "backend.managertestapp.com",
-    "mangertestapp.com",
+    "managertestapp.com",
 ]
 
 # Application definition
@@ -152,11 +152,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "users.User"
 
-CORS_ALLOWED_ORIGINS = ["https://mangertestapp.com"]
+CORS_ALLOWED_ORIGINS = ["https://managertestapp.com"]
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = ["https://mangertestapp.com"]
+CSRF_TRUSTED_ORIGINS = ["https://managertestapp.com"]
 
 # COOKIE
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
