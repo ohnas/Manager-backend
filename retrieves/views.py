@@ -87,197 +87,228 @@ class Retrieves(APIView):
                     pay_time = datetime.fromtimestamp(pay_time)
                     pay_time = pay_time.strftime("%Y-%m-%d")
                     for item in d["items"]:
-                        order = {
-                            "order_no": order_no["order_no"],
-                            "order_time": order_no["order_time"],
-                            "status": d["status"],
-                            "pay_time": pay_time,
-                            "prod_name": item["prod_name"],
-                            "prod_count": 1,
-                            "price": item["payment"]["price"],
-                            "deliv_price": item["payment"]["deliv_price"],
-                            "island_price": item["payment"]["island_price"],
-                            "price_sale": item["payment"]["price_sale"],
-                            "point": float(item["payment"]["point"]),
-                            "coupon": item["payment"]["coupon"],
-                            "membership_discount": item["payment"][
-                                "membership_discount"
-                            ],
-                            "period_discount": item["payment"]["period_discount"],
-                            "option": item["options"][0][0]["value_name_list"][0],
-                            "count": item["options"][0][0]["payment"]["count"],
-                        }
+                        if "options" in item:
+                            order = {
+                                "imweb_order_no": order_no["order_no"],
+                                "imweb_order_time": order_no["order_time"],
+                                "imweb_status": d["status"],
+                                "imweb_pay_time": pay_time,
+                                "imweb_prod_name": item["prod_name"],
+                                # "prod_count": 1,
+                                "imweb_price": item["payment"]["price"],
+                                "imweb_deliv_price": item["payment"]["deliv_price"],
+                                "imweb_island_price": item["payment"]["island_price"],
+                                "imweb_price_sale": item["payment"]["price_sale"],
+                                "imweb_point": float(item["payment"]["point"]),
+                                "imweb_coupon": item["payment"]["coupon"],
+                                "imweb_membership_discount": item["payment"][
+                                    "membership_discount"
+                                ],
+                                "imweb_period_discount": item["payment"][
+                                    "period_discount"
+                                ],
+                                "imweb_option": item["options"][0][0][
+                                    "value_name_list"
+                                ][0],
+                                "imweb_count": item["options"][0][0]["payment"][
+                                    "count"
+                                ],
+                            }
+                        else:
+                            order = {
+                                "imweb_order_no": order_no["order_no"],
+                                "imweb_order_time": order_no["order_time"],
+                                "imweb_status": d["status"],
+                                "imweb_pay_time": pay_time,
+                                "imweb_prod_name": item["prod_name"],
+                                # "prod_count": 1,
+                                "imweb_price": item["payment"]["price"],
+                                "imweb_deliv_price": item["payment"]["deliv_price"],
+                                "imweb_island_price": item["payment"]["island_price"],
+                                "imweb_price_sale": item["payment"]["price_sale"],
+                                "imweb_point": float(item["payment"]["point"]),
+                                "imweb_coupon": item["payment"]["coupon"],
+                                "imweb_membership_discount": item["payment"][
+                                    "membership_discount"
+                                ],
+                                "imweb_period_discount": item["payment"][
+                                    "period_discount"
+                                ],
+                                "imweb_option": "No option",
+                                "imweb_count": item["payment"]["count"],
+                            }
                         order_list.append(order)
 
             modified_order_list = []
             for order in order_list:
                 if (
-                    order["status"] == "PAY_COMPLETE"
-                    or order["status"] == "STANDBY"
-                    or order["status"] == "DELIVERING"
-                    or order["status"] == "COMPLETE"
+                    order["imweb_status"] == "PAY_COMPLETE"
+                    or order["imweb_status"] == "STANDBY"
+                    or order["imweb_status"] == "DELIVERING"
+                    or order["imweb_status"] == "COMPLETE"
                 ):
                     modified_order_list.append(order)
 
-            df = pd.DataFrame.from_records(modified_order_list)
-            products_df = df[["order_time", "prod_name", "prod_count"]]
-            options_df = df[["order_time", "prod_name", "option", "count"]]
-            by_products_payment_df = df[
-                [
-                    "order_time",
-                    "prod_name",
-                    "price",
-                    "deliv_price",
-                    "island_price",
-                    "price_sale",
-                    "point",
-                    "coupon",
-                    "membership_discount",
-                    "period_discount",
-                ]
-            ]
-            products_dict = {}
-            options_dict = {}
-            by_products_payment_dict = {}
-            brand = Brand.objects.get(pk=brand)
-            products = brand.product_set.all()
-            products_list = []
-            for product in products:
-                products_list.append(str(product))
-            for prod in products_list:
-                product_df = products_df.loc[products_df["prod_name"].eq(prod), :]
-                product_dict = (
-                    pd.DataFrame.pivot_table(
-                        product_df,
-                        values="prod_count",
-                        index=["order_time", "prod_name"],
-                        aggfunc=sum,
-                        fill_value=0,
-                    )
-                    .reset_index(level="prod_name")
-                    .to_dict(orient="index")
-                )
-                if product_dict:
-                    products_dict[prod] = product_dict
-                option_df = options_df.loc[options_df["prod_name"].eq(prod), :]
-                option_dict = (
-                    pd.DataFrame.pivot_table(
-                        option_df,
-                        values="count",
-                        index=[
-                            "order_time",
-                            "prod_name",
-                        ],
-                        columns=["option"],
-                        aggfunc=sum,
-                        fill_value=0,
-                    )
-                    .reset_index(level="prod_name")
-                    .to_dict(orient="index")
-                )
-                if option_dict:
-                    options_dict[prod] = option_dict
-                by_product_payment_df = by_products_payment_df.loc[
-                    by_products_payment_df["prod_name"].eq(prod), :
-                ]
-                by_product_payment_dict = (
-                    pd.DataFrame.pivot_table(
-                        by_product_payment_df,
-                        index=["order_time", "prod_name"],
-                        values=[
-                            "price",
-                            "deliv_price",
-                            "island_price",
-                            "price_sale",
-                            "point",
-                            "coupon",
-                            "membership_discount",
-                            "period_discount",
-                        ],
-                        aggfunc={
-                            "price": sum,
-                            "deliv_price": sum,
-                            "island_price": sum,
-                            "price_sale": sum,
-                            "point": sum,
-                            "coupon": sum,
-                            "membership_discount": sum,
-                            "period_discount": sum,
-                        },
-                        fill_value=0,
-                    )
-                    .reset_index(level="prod_name")
-                    .to_dict(orient="index")
-                )
-                if by_product_payment_dict:
-                    by_products_payment_dict[prod] = by_product_payment_dict
+        #     df = pd.DataFrame.from_records(modified_order_list)
+        #     products_df = df[["order_time", "prod_name", "prod_count"]]
+        #     options_df = df[["order_time", "prod_name", "option", "count"]]
+        #     by_products_payment_df = df[
+        #         [
+        #             "order_time",
+        #             "prod_name",
+        #             "price",
+        #             "deliv_price",
+        #             "island_price",
+        #             "price_sale",
+        #             "point",
+        #             "coupon",
+        #             "membership_discount",
+        #             "period_discount",
+        #         ]
+        #     ]
+        #     products_dict = {}
+        #     options_dict = {}
+        #     by_products_payment_dict = {}
+        #     brand = Brand.objects.get(pk=brand)
+        #     products = brand.product_set.all()
+        #     products_list = []
+        #     for product in products:
+        #         products_list.append(str(product))
+        #     for prod in products_list:
+        #         product_df = products_df.loc[products_df["prod_name"].eq(prod), :]
+        #         product_dict = (
+        #             pd.DataFrame.pivot_table(
+        #                 product_df,
+        #                 values="prod_count",
+        #                 index=["order_time", "prod_name"],
+        #                 aggfunc=sum,
+        #                 fill_value=0,
+        #             )
+        #             .reset_index(level="prod_name")
+        #             .to_dict(orient="index")
+        #         )
+        #         if product_dict:
+        #             products_dict[prod] = product_dict
+        #         option_df = options_df.loc[options_df["prod_name"].eq(prod), :]
+        #         option_dict = (
+        #             pd.DataFrame.pivot_table(
+        #                 option_df,
+        #                 values="count",
+        #                 index=[
+        #                     "order_time",
+        #                     "prod_name",
+        #                 ],
+        #                 columns=["option"],
+        #                 aggfunc=sum,
+        #                 fill_value=0,
+        #             )
+        #             .reset_index(level="prod_name")
+        #             .to_dict(orient="index")
+        #         )
+        #         if option_dict:
+        #             options_dict[prod] = option_dict
+        #         by_product_payment_df = by_products_payment_df.loc[
+        #             by_products_payment_df["prod_name"].eq(prod), :
+        #         ]
+        #         by_product_payment_dict = (
+        #             pd.DataFrame.pivot_table(
+        #                 by_product_payment_df,
+        #                 index=["order_time", "prod_name"],
+        #                 values=[
+        #                     "price",
+        #                     "deliv_price",
+        #                     "island_price",
+        #                     "price_sale",
+        #                     "point",
+        #                     "coupon",
+        #                     "membership_discount",
+        #                     "period_discount",
+        #                 ],
+        #                 aggfunc={
+        #                     "price": sum,
+        #                     "deliv_price": sum,
+        #                     "island_price": sum,
+        #                     "price_sale": sum,
+        #                     "point": sum,
+        #                     "coupon": sum,
+        #                     "membership_discount": sum,
+        #                     "period_discount": sum,
+        #                 },
+        #                 fill_value=0,
+        #             )
+        #             .reset_index(level="prod_name")
+        #             .to_dict(orient="index")
+        #         )
+        #         if by_product_payment_dict:
+        #             by_products_payment_dict[prod] = by_product_payment_dict
 
-            by_date_payment_df = df[
-                [
-                    "order_time",
-                    "price",
-                    "deliv_price",
-                    "island_price",
-                    "price_sale",
-                    "point",
-                    "coupon",
-                    "membership_discount",
-                    "period_discount",
-                ]
-            ]
+        #     by_date_payment_df = df[
+        #         [
+        #             "order_time",
+        #             "price",
+        #             "deliv_price",
+        #             "island_price",
+        #             "price_sale",
+        #             "point",
+        #             "coupon",
+        #             "membership_discount",
+        #             "period_discount",
+        #         ]
+        #     ]
 
-            by_date_payment_df = pd.DataFrame.pivot_table(
-                by_date_payment_df,
-                index=["order_time"],
-                values=[
-                    "price",
-                    "deliv_price",
-                    "island_price",
-                    "price_sale",
-                    "point",
-                    "coupon",
-                    "membership_discount",
-                    "period_discount",
-                ],
-                aggfunc={
-                    "price": sum,
-                    "deliv_price": sum,
-                    "island_price": sum,
-                    "price_sale": sum,
-                    "point": sum,
-                    "coupon": sum,
-                    "membership_discount": sum,
-                    "period_discount": sum,
-                },
-                fill_value=0,
-            )
-            by_date_payment_dict = by_date_payment_df.to_dict(orient="index")
-            total_order_df = df[["order_time", "prod_count"]]
-            total_order_df = pd.DataFrame.pivot_table(
-                total_order_df,
-                index=["order_time"],
-                values=["prod_count"],
-                aggfunc={"prod_count": sum},
-                fill_value=0,
-            )
-            total_order_dict = total_order_df.to_dict(orient="index")
-            imweb_order_dict = {
-                "products": products_dict,
-                "options": options_dict,
-                "by_products_payment": by_products_payment_dict,
-                "by_date_payment": by_date_payment_dict,
-                "total_order": total_order_dict,
-            }
-        else:
-            imweb_order_dict = {
-                "products": {},
-                "options": {},
-                "by_products_payment": {},
-                "by_date_payment": {},
-                "total_order": {},
-            }
+        #     by_date_payment_df = pd.DataFrame.pivot_table(
+        #         by_date_payment_df,
+        #         index=["order_time"],
+        #         values=[
+        #             "price",
+        #             "deliv_price",
+        #             "island_price",
+        #             "price_sale",
+        #             "point",
+        #             "coupon",
+        #             "membership_discount",
+        #             "period_discount",
+        #         ],
+        #         aggfunc={
+        #             "price": sum,
+        #             "deliv_price": sum,
+        #             "island_price": sum,
+        #             "price_sale": sum,
+        #             "point": sum,
+        #             "coupon": sum,
+        #             "membership_discount": sum,
+        #             "period_discount": sum,
+        #         },
+        #         fill_value=0,
+        #     )
+        #     by_date_payment_dict = by_date_payment_df.to_dict(orient="index")
+        #     total_order_df = df[["order_time", "prod_count"]]
+        #     total_order_df = pd.DataFrame.pivot_table(
+        #         total_order_df,
+        #         index=["order_time"],
+        #         values=["prod_count"],
+        #         aggfunc={"prod_count": sum},
+        #         fill_value=0,
+        #     )
+        #     total_order_dict = total_order_df.to_dict(orient="index")
+        #     imweb_order_dict = {
+        #         "products": products_dict,
+        #         "options": options_dict,
+        #         "by_products_payment": by_products_payment_dict,
+        #         "by_date_payment": by_date_payment_dict,
+        #         "total_order": total_order_dict,
+        #     }
+        # else:
+        #     imweb_order_dict = {
+        #         "products": {},
+        #         "options": {},
+        #         "by_products_payment": {},
+        #         "by_date_payment": {},
+        #         "total_order": {},
+        #     }
 
-        return imweb_order_dict
+        # return imweb_order_dict
+        return modified_order_list
 
     def facebook_api(self, brand, advertising_site, from_date, to_date):
         app_id = settings.FACEBOOK_APP_ID
@@ -533,15 +564,16 @@ class Retrieves(APIView):
         try:
             brand = request.query_params["brandPk"]
             sale_site = request.query_params["saleSite"]
-            advertising_site = request.query_params["advertisingSite"]
+            # advertising_site = request.query_params["advertisingSite"]
             from_date = request.query_params["dateFrom"]
             to_date = request.query_params["dateTo"]
         except KeyError:
             raise NotFound
         imweb_data = self.imweb_api(brand, sale_site, from_date, to_date)
-        facebook_data = self.facebook_api(brand, advertising_site, from_date, to_date)
-        retrieve_data = {
-            "imweb_data": imweb_data,
-            "facebook_data": facebook_data,
-        }
-        return Response(retrieve_data)
+        # facebook_data = self.facebook_api(brand, advertising_site, from_date, to_date)
+        # retrieve_data = {
+        #     "imweb_data": imweb_data,
+        #     "facebook_data": facebook_data,
+        # }
+        # return Response(retrieve_data)
+        return Response(imweb_data)
