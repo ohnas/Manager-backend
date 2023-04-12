@@ -7,6 +7,7 @@ from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.adsinsights import AdsInsights
 from facebook_business.api import FacebookAdsApi
 from brands.models import Brand
+from products.models import Product
 from sites.models import Site
 from datetime import datetime, timedelta
 import requests
@@ -408,172 +409,258 @@ class Retrieves(APIView):
                     "add_to_cart": int(add_to_cart),
                 }
                 advertisings_list.append(advertisings)
-        if advertisings_list:
-            df = pd.DataFrame.from_records(advertisings_list)
-            campaigns_df = df[
-                [
-                    "date",
-                    "campaign_name",
-                    "reach",
-                    "impressions",
-                    "frequency",
-                    "spend",
-                    "cpm",
-                    "website_ctr",
-                    "purchase_roas",
-                    "cost_per_unique_inline_link_click",
-                    "purchase",
-                    "landing_page_view",
-                    "link_click",
-                    "add_payment_info",
-                    "add_to_cart",
-                ]
-            ]
-            brand = Brand.objects.get(pk=brand)
-            products = brand.product_set.all()
-            prod_list = []
-            for product in products:
-                prod_list.append(str(product))
-            campaigns_dict = {}
-            for product in prod_list:
-                campaign_df = campaigns_df.loc[
-                    campaigns_df["campaign_name"].eq(product), :
-                ]
-                campaign_dict = (
-                    pd.DataFrame.pivot_table(
-                        campaign_df,
-                        index=["date", "campaign_name"],
-                        values=[
-                            "reach",
-                            "impressions",
-                            "frequency",
-                            "spend",
-                            "cpm",
-                            "website_ctr",
-                            "purchase_roas",
-                            "cost_per_unique_inline_link_click",
-                            "purchase",
-                            "landing_page_view",
-                            "link_click",
-                            "add_payment_info",
-                            "add_to_cart",
-                        ],
-                        aggfunc={
-                            "reach": sum,
-                            "impressions": sum,
-                            "frequency": sum,
-                            "spend": sum,
-                            "cpm": sum,
-                            "website_ctr": sum,
-                            "purchase_roas": sum,
-                            "cost_per_unique_inline_link_click": sum,
-                            "purchase": sum,
-                            "landing_page_view": sum,
-                            "link_click": sum,
-                            "add_payment_info": sum,
-                            "add_to_cart": sum,
-                        },
-                        fill_value=0,
-                    )
-                    .reset_index(level="campaign_name")
-                    .to_dict(orient="index")
-                )
-                if campaign_dict:
-                    campaigns_dict[product] = campaign_dict
+        # if advertisings_list:
+        #     df = pd.DataFrame.from_records(advertisings_list)
+        #     campaigns_df = df[
+        #         [
+        #             "date",
+        #             "campaign_name",
+        #             "reach",
+        #             "impressions",
+        #             "frequency",
+        #             "spend",
+        #             "cpm",
+        #             "website_ctr",
+        #             "purchase_roas",
+        #             "cost_per_unique_inline_link_click",
+        #             "purchase",
+        #             "landing_page_view",
+        #             "link_click",
+        #             "add_payment_info",
+        #             "add_to_cart",
+        #         ]
+        #     ]
+        #     brand = Brand.objects.get(pk=brand)
+        #     products = brand.product_set.all()
+        #     prod_list = []
+        #     for product in products:
+        #         prod_list.append(str(product))
+        #     campaigns_dict = {}
+        #     for product in prod_list:
+        #         campaign_df = campaigns_df.loc[
+        #             campaigns_df["campaign_name"].eq(product), :
+        #         ]
+        #         campaign_dict = (
+        #             pd.DataFrame.pivot_table(
+        #                 campaign_df,
+        #                 index=["date", "campaign_name"],
+        #                 values=[
+        #                     "reach",
+        #                     "impressions",
+        #                     "frequency",
+        #                     "spend",
+        #                     "cpm",
+        #                     "website_ctr",
+        #                     "purchase_roas",
+        #                     "cost_per_unique_inline_link_click",
+        #                     "purchase",
+        #                     "landing_page_view",
+        #                     "link_click",
+        #                     "add_payment_info",
+        #                     "add_to_cart",
+        #                 ],
+        #                 aggfunc={
+        #                     "reach": sum,
+        #                     "impressions": sum,
+        #                     "frequency": sum,
+        #                     "spend": sum,
+        #                     "cpm": sum,
+        #                     "website_ctr": sum,
+        #                     "purchase_roas": sum,
+        #                     "cost_per_unique_inline_link_click": sum,
+        #                     "purchase": sum,
+        #                     "landing_page_view": sum,
+        #                     "link_click": sum,
+        #                     "add_payment_info": sum,
+        #                     "add_to_cart": sum,
+        #                 },
+        #                 fill_value=0,
+        #             )
+        #             .reset_index(level="campaign_name")
+        #             .to_dict(orient="index")
+        #         )
+        #         if campaign_dict:
+        #             campaigns_dict[product] = campaign_dict
 
-            by_date_df = df[
-                [
-                    "date",
-                    "reach",
-                    "impressions",
-                    "frequency",
-                    "spend",
-                    "cpm",
-                    "website_ctr",
-                    "purchase_roas",
-                    "cost_per_unique_inline_link_click",
-                    "purchase",
-                    "landing_page_view",
-                    "link_click",
-                    "add_payment_info",
-                    "add_to_cart",
-                ]
-            ]
-            by_date_dict = pd.DataFrame.pivot_table(
-                by_date_df,
-                index=["date"],
-                values=[
-                    "reach",
-                    "impressions",
-                    "frequency",
-                    "spend",
-                    "cpm",
-                    "website_ctr",
-                    "purchase_roas",
-                    "cost_per_unique_inline_link_click",
-                    "purchase",
-                    "landing_page_view",
-                    "link_click",
-                    "add_payment_info",
-                    "add_to_cart",
-                ],
-                aggfunc={
-                    "reach": sum,
-                    "impressions": sum,
-                    "frequency": sum,
-                    "spend": sum,
-                    "cpm": sum,
-                    "website_ctr": sum,
-                    "purchase_roas": sum,
-                    "cost_per_unique_inline_link_click": sum,
-                    "purchase": sum,
-                    "landing_page_view": sum,
-                    "link_click": sum,
-                    "add_payment_info": sum,
-                    "add_to_cart": sum,
-                },
-                fill_value=0,
-            ).to_dict(orient="index")
-            exchange_rate = {}
-            for date in date_list:
-                exchange_rate_api = requests.get(
-                    f"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/{date}/currencies/usd/krw.json"
-                )
-                exchange_rate_api = exchange_rate_api.json()
-                exchange_rate[exchange_rate_api["date"]] = round(
-                    exchange_rate_api["krw"], 2
-                )
+        #     by_date_df = df[
+        #         [
+        #             "date",
+        #             "reach",
+        #             "impressions",
+        #             "frequency",
+        #             "spend",
+        #             "cpm",
+        #             "website_ctr",
+        #             "purchase_roas",
+        #             "cost_per_unique_inline_link_click",
+        #             "purchase",
+        #             "landing_page_view",
+        #             "link_click",
+        #             "add_payment_info",
+        #             "add_to_cart",
+        #         ]
+        #     ]
+        #     by_date_dict = pd.DataFrame.pivot_table(
+        #         by_date_df,
+        #         index=["date"],
+        #         values=[
+        #             "reach",
+        #             "impressions",
+        #             "frequency",
+        #             "spend",
+        #             "cpm",
+        #             "website_ctr",
+        #             "purchase_roas",
+        #             "cost_per_unique_inline_link_click",
+        #             "purchase",
+        #             "landing_page_view",
+        #             "link_click",
+        #             "add_payment_info",
+        #             "add_to_cart",
+        #         ],
+        #         aggfunc={
+        #             "reach": sum,
+        #             "impressions": sum,
+        #             "frequency": sum,
+        #             "spend": sum,
+        #             "cpm": sum,
+        #             "website_ctr": sum,
+        #             "purchase_roas": sum,
+        #             "cost_per_unique_inline_link_click": sum,
+        #             "purchase": sum,
+        #             "landing_page_view": sum,
+        #             "link_click": sum,
+        #             "add_payment_info": sum,
+        #             "add_to_cart": sum,
+        #         },
+        #         fill_value=0,
+        #     ).to_dict(orient="index")
+        #     exchange_rate = {}
+        #     for date in date_list:
+        #         exchange_rate_api = requests.get(
+        #             f"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/{date}/currencies/usd/krw.json"
+        #         )
+        #         exchange_rate_api = exchange_rate_api.json()
+        #         exchange_rate[exchange_rate_api["date"]] = round(
+        #             exchange_rate_api["krw"], 2
+        #         )
 
-            facebook_dict = {
-                "by_date": by_date_dict,
-                "campaigns": campaigns_dict,
-                "adsets": advertisings_list,
-                "exchange_rate": exchange_rate,
-            }
-        else:
-            facebook_dict = {
-                "by_date": {},
-                "campaigns": {},
-                "adsets": {},
-                "exchange_rate": {},
-            }
+        #     facebook_dict = {
+        #         "by_date": by_date_dict,
+        #         "campaigns": campaigns_dict,
+        #         "adsets": advertisings_list,
+        #         "exchange_rate": exchange_rate,
+        #     }
+        # else:
+        #     facebook_dict = {
+        #         "by_date": {},
+        #         "campaigns": {},
+        #         "adsets": {},
+        #         "exchange_rate": {},
+        #     }
 
-        return facebook_dict
+        # return facebook_dict
+        return advertisings_list
 
     def get(self, request):
         try:
             brand = request.query_params["brandPk"]
             sale_site = request.query_params["saleSite"]
-            # advertising_site = request.query_params["advertisingSite"]
+            advertising_site = request.query_params["advertisingSite"]
             from_date = request.query_params["dateFrom"]
             to_date = request.query_params["dateTo"]
         except KeyError:
             raise NotFound
         imweb_data = self.imweb_api(brand, sale_site, from_date, to_date)
-        # facebook_data = self.facebook_api(brand, advertising_site, from_date, to_date)
+        facebook_data = self.facebook_api(brand, advertising_site, from_date, to_date)
+        brand = Brand.objects.get(pk=brand)
+        products = brand.product_set.values(
+            "id", "name", "cost", "logistic_fee", "quantity", "gift_quantity"
+        )
+        options = []
+        for product in products:
+            pk = product["id"]
+            selected_product = Product.objects.get(pk=pk)
+            option_query_set = selected_product.options_set.values(
+                "name", "logistic_fee", "quantity", "gift_quantity"
+            )
+            for option in option_query_set:
+                options.append(option)
+
         # retrieve_data = {
         #     "imweb_data": imweb_data,
         #     "facebook_data": facebook_data,
         # }
         # return Response(retrieve_data)
-        return Response(imweb_data)
+
+        imweb_df = pd.DataFrame.from_records(imweb_data)
+        products_df = pd.DataFrame.from_records(products)
+        products_df = products_df.drop("id", axis=1).rename(
+            columns={"name": "imweb_prod_name"}
+        )
+
+        options_df = pd.DataFrame.from_records(options)
+        options_df = options_df.rename(columns={"name": "imweb_option"})
+
+        imweb_df = imweb_df.merge(products_df, on="imweb_prod_name").drop(
+            ["logistic_fee", "quantity", "gift_quantity"], axis=1
+        )
+
+        imweb_without_option_df = imweb_df[imweb_df["imweb_option"] == "No option"]
+        imweb_with_option_df = imweb_df[imweb_df["imweb_option"] != "No option"]
+
+        products_df = products_df.drop("cost", axis=1)
+
+        imweb_product_merge_df = imweb_without_option_df.merge(
+            products_df, on="imweb_prod_name"
+        )
+        imweb_option_merge_df = imweb_with_option_df.merge(
+            options_df, on="imweb_option"
+        )
+
+        imweb_df = pd.concat([imweb_product_merge_df, imweb_option_merge_df])
+        imweb_df["shipment_quantity"] = (
+            imweb_df["imweb_count"] * imweb_df["quantity"]
+        ) + (imweb_df["imweb_count"] * imweb_df["gift_quantity"])
+        imweb_df["product_cost"] = imweb_df["cost"] * imweb_df["shipment_quantity"]
+        imweb_df = (
+            imweb_df.groupby(by="imweb_order_time", as_index=False)
+            .agg(
+                {
+                    "imweb_price": "sum",
+                    "imweb_deliv_price": "sum",
+                    "imweb_island_price": "sum",
+                    "imweb_price_sale": "sum",
+                    "imweb_point": "sum",
+                    "imweb_coupon": "sum",
+                    "imweb_membership_discount": "sum",
+                    "imweb_period_discount": "sum",
+                    "imweb_count": "sum",
+                    "logistic_fee": "sum",
+                    "product_cost": "sum",
+                }
+            )
+            .rename(columns={"imweb_order_time": "date"})
+        )
+
+        facebook_df = pd.DataFrame.from_records(facebook_data)
+        facebook_df = facebook_df.groupby(by="date", as_index=False).agg(
+            {
+                "reach": "sum",
+                "impressions": "sum",
+                "frequency": "sum",
+                "spend": "sum",
+                "cpm": "sum",
+                "website_ctr": "sum",
+                "purchase_roas": "sum",
+                "cost_per_unique_inline_link_click": "sum",
+                "purchase": "sum",
+                "landing_page_view": "sum",
+                "link_click": "sum",
+                "add_payment_info": "sum",
+                "add_to_cart": "sum",
+            }
+        )
+        total_df = imweb_df.merge(facebook_df, on="date").set_index("date")
+        total = total_df.to_dict("index")
+        return Response(total)
