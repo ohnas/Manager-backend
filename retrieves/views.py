@@ -282,6 +282,8 @@ class Retrieves(APIView):
         imweb_data = self.imweb_api(sale_site, from_date, to_date)
         facebook_data = self.facebook_api(advertising_site, date_list)
         exchange_rate_data = self.exchange_rate_api(date_list)
+        print(imweb_data)
+        print(facebook_data)
 
         brand = Brand.objects.get(pk=brand)
         products = brand.product_set.values(
@@ -365,6 +367,22 @@ class Retrieves(APIView):
                         "sale_expense": 0,
                     }
                 )
+                pk = product["id"]
+                current_product = Product.objects.get(pk=pk)
+                option_list = current_product.options_set.values("name")
+                option_data = {}
+                if option_list:
+                    for option in option_list:
+                        imweb_option_df = pd.DataFrame(
+                            {
+                                "date": date_list,
+                                "option_count": 0,
+                                "option_rate": 0.0,
+                            }
+                        )
+                        imweb_option_df = imweb_option_df.set_index("date")
+                        option_total = imweb_option_df.to_dict("index")
+                        option_data[option["name"]] = option_total
                 facebook_campaign_df = pd.DataFrame(
                     {
                         "date": date_list,
@@ -435,7 +453,10 @@ class Retrieves(APIView):
                 )
                 product_total_df = product_total_df.set_index("date")
                 product_total = product_total_df.to_dict("index")
-                data[product["name"]] = product_total
+                data[product["name"]] = {
+                    "date": product_total,
+                    "options": option_data,
+                }
 
         elif imweb_data and not facebook_data:
             imweb_df = pd.DataFrame.from_records(imweb_data)
@@ -544,6 +565,69 @@ class Retrieves(APIView):
                 imweb_product_df = imweb_df[
                     imweb_df["imweb_prod_name"] == product["name"]
                 ]
+                pk = product["id"]
+                current_product = Product.objects.get(pk=pk)
+                option_list = current_product.options_set.values("name")
+                option_data = {}
+                if option_list:
+                    for option in option_list:
+                        imweb_product_only_count_df = imweb_product_df[
+                            ["imweb_order_time", "imweb_count"]
+                        ].rename(columns={"imweb_order_time": "date"})
+                        imweb_product_only_count_df = (
+                            imweb_product_only_count_df.groupby(
+                                by="date", as_index=False
+                            ).agg(
+                                {
+                                    "imweb_count": "sum",
+                                }
+                            )
+                        )
+                        imweb_option_df = imweb_product_df[
+                            imweb_product_df["imweb_option"] == option["name"]
+                        ]
+                        imweb_option_df = imweb_option_df[
+                            ["imweb_order_time", "imweb_option", "imweb_count"]
+                        ].rename(
+                            columns={
+                                "imweb_order_time": "date",
+                                "imweb_count": "option_count",
+                            }
+                        )
+                        imweb_option_df = imweb_option_df.groupby(
+                            by=["date", "imweb_option"], as_index=False
+                        ).agg(
+                            {
+                                "option_count": "sum",
+                            }
+                        )
+                        for d in date_list:
+                            if imweb_option_df[imweb_option_df["date"] == d].empty:
+                                imweb_without_day_df = pd.DataFrame(
+                                    [
+                                        {
+                                            "date": d,
+                                            "imweb_option": option["name"],
+                                            "option_count": 0,
+                                        }
+                                    ]
+                                )
+                                imweb_option_df = pd.concat(
+                                    [imweb_option_df, imweb_without_day_df]
+                                )
+                        imweb_option_df = imweb_option_df.merge(
+                            imweb_product_only_count_df, on="date"
+                        )
+                        imweb_option_df["option_rate"] = (
+                            imweb_option_df["option_count"]
+                            / imweb_option_df["imweb_count"]
+                        ) * 100
+                        imweb_option_df = imweb_option_df.drop(
+                            ["imweb_option", "imweb_count"], axis=1
+                        ).set_index("date")
+                        option_total = imweb_option_df.to_dict("index")
+                        option_data[option["name"]] = option_total
+
                 imweb_product_df = (
                     imweb_product_df.groupby(by="imweb_order_time", as_index=False)
                     .agg(
@@ -660,7 +744,10 @@ class Retrieves(APIView):
                 )
                 product_total_df = product_total_df.set_index("date")
                 product_total = product_total_df.to_dict("index")
-                data[product["name"]] = product_total
+                data[product["name"]] = {
+                    "date": product_total,
+                    "options": option_data,
+                }
 
         elif not imweb_data and facebook_data:
             imweb_total_df = pd.DataFrame(
@@ -750,6 +837,23 @@ class Retrieves(APIView):
                         "sale_expense": 0,
                     }
                 )
+                pk = product["id"]
+                current_product = Product.objects.get(pk=pk)
+                option_list = current_product.options_set.values("name")
+                option_data = {}
+                if option_list:
+                    for option in option_list:
+                        imweb_option_df = pd.DataFrame(
+                            {
+                                "date": date_list,
+                                "option_count": 0,
+                                "option_rate": 0.0,
+                            }
+                        )
+                        imweb_option_df = imweb_option_df.set_index("date")
+                        option_total = imweb_option_df.to_dict("index")
+                        option_data[option["name"]] = option_total
+
                 facebook_campaign_df = facebook_df[
                     facebook_df["campaign_name"] == product["name"]
                 ]
@@ -856,7 +960,10 @@ class Retrieves(APIView):
                 )
                 product_total_df = product_total_df.set_index("date")
                 product_total = product_total_df.to_dict("index")
-                data[product["name"]] = product_total
+                data[product["name"]] = {
+                    "date": product_total,
+                    "options": option_data,
+                }
 
         elif imweb_data and facebook_data:
             imweb_df = pd.DataFrame.from_records(imweb_data)
@@ -997,6 +1104,69 @@ class Retrieves(APIView):
                 imweb_product_df = imweb_df[
                     imweb_df["imweb_prod_name"] == product["name"]
                 ]
+                pk = product["id"]
+                current_product = Product.objects.get(pk=pk)
+                option_list = current_product.options_set.values("name")
+                option_data = {}
+                if option_list:
+                    for option in option_list:
+                        imweb_product_only_count_df = imweb_product_df[
+                            ["imweb_order_time", "imweb_count"]
+                        ].rename(columns={"imweb_order_time": "date"})
+                        imweb_product_only_count_df = (
+                            imweb_product_only_count_df.groupby(
+                                by="date", as_index=False
+                            ).agg(
+                                {
+                                    "imweb_count": "sum",
+                                }
+                            )
+                        )
+                        imweb_option_df = imweb_product_df[
+                            imweb_product_df["imweb_option"] == option["name"]
+                        ]
+                        imweb_option_df = imweb_option_df[
+                            ["imweb_order_time", "imweb_option", "imweb_count"]
+                        ].rename(
+                            columns={
+                                "imweb_order_time": "date",
+                                "imweb_count": "option_count",
+                            }
+                        )
+                        imweb_option_df = imweb_option_df.groupby(
+                            by=["date", "imweb_option"], as_index=False
+                        ).agg(
+                            {
+                                "option_count": "sum",
+                            }
+                        )
+                        for d in date_list:
+                            if imweb_option_df[imweb_option_df["date"] == d].empty:
+                                imweb_without_day_df = pd.DataFrame(
+                                    [
+                                        {
+                                            "date": d,
+                                            "imweb_option": option["name"],
+                                            "option_count": 0,
+                                        }
+                                    ]
+                                )
+                                imweb_option_df = pd.concat(
+                                    [imweb_option_df, imweb_without_day_df]
+                                )
+                        imweb_option_df = imweb_option_df.merge(
+                            imweb_product_only_count_df, on="date"
+                        )
+                        imweb_option_df["option_rate"] = (
+                            imweb_option_df["option_count"]
+                            / imweb_option_df["imweb_count"]
+                        ) * 100
+                        imweb_option_df = imweb_option_df.drop(
+                            ["imweb_option", "imweb_count"], axis=1
+                        ).set_index("date")
+                        option_total = imweb_option_df.to_dict("index")
+                        option_data[option["name"]] = option_total
+
                 imweb_product_df = (
                     imweb_product_df.groupby(by="imweb_order_time", as_index=False)
                     .agg(
@@ -1150,7 +1320,10 @@ class Retrieves(APIView):
                 )
                 product_total_df = product_total_df.set_index("date")
                 product_total = product_total_df.to_dict("index")
-                data[product["name"]] = product_total
+                data[product["name"]] = {
+                    "date": product_total,
+                    "options": option_data,
+                }
 
         facebook_total_df = facebook_total_df.merge(exchange_rate_df, on="date")
         facebook_total_df["facebook_ad_expense_krw"] = (
@@ -1193,6 +1366,21 @@ class Retrieves(APIView):
         )
         total_df = total_df.set_index("date")
         total = total_df.to_dict("index")
+        total_sum_df = total_df.drop(
+            [
+                "website_ctr",
+                "purchase_roas",
+                "conversion_rate",
+                "krw",
+                "operating_profit_rate",
+                "product_cost_rate",
+                "facebook_ad_expense_krw_rate",
+            ],
+            axis=1,
+        )
+        total_sum = total_sum_df.sum(axis=0)
+        total_sum = total_sum.to_dict()
         data["total"] = total
+        data["sum"] = total_sum
 
         return Response(data)
