@@ -244,157 +244,7 @@ class Retrieves(APIView):
                     "add_to_cart": int(add_to_cart),
                 }
                 advertisings_list.append(advertisings)
-        # if advertisings_list:
-        #     df = pd.DataFrame.from_records(advertisings_list)
-        #     campaigns_df = df[
-        #         [
-        #             "date",
-        #             "campaign_name",
-        #             "reach",
-        #             "impressions",
-        #             "frequency",
-        #             "spend",
-        #             "cpm",
-        #             "website_ctr",
-        #             "purchase_roas",
-        #             "cost_per_unique_inline_link_click",
-        #             "purchase",
-        #             "landing_page_view",
-        #             "link_click",
-        #             "add_payment_info",
-        #             "add_to_cart",
-        #         ]
-        #     ]
-        #     brand = Brand.objects.get(pk=brand)
-        #     products = brand.product_set.all()
-        #     prod_list = []
-        #     for product in products:
-        #         prod_list.append(str(product))
-        #     campaigns_dict = {}
-        #     for product in prod_list:
-        #         campaign_df = campaigns_df.loc[
-        #             campaigns_df["campaign_name"].eq(product), :
-        #         ]
-        #         campaign_dict = (
-        #             pd.DataFrame.pivot_table(
-        #                 campaign_df,
-        #                 index=["date", "campaign_name"],
-        #                 values=[
-        #                     "reach",
-        #                     "impressions",
-        #                     "frequency",
-        #                     "spend",
-        #                     "cpm",
-        #                     "website_ctr",
-        #                     "purchase_roas",
-        #                     "cost_per_unique_inline_link_click",
-        #                     "purchase",
-        #                     "landing_page_view",
-        #                     "link_click",
-        #                     "add_payment_info",
-        #                     "add_to_cart",
-        #                 ],
-        #                 aggfunc={
-        #                     "reach": sum,
-        #                     "impressions": sum,
-        #                     "frequency": sum,
-        #                     "spend": sum,
-        #                     "cpm": sum,
-        #                     "website_ctr": sum,
-        #                     "purchase_roas": sum,
-        #                     "cost_per_unique_inline_link_click": sum,
-        #                     "purchase": sum,
-        #                     "landing_page_view": sum,
-        #                     "link_click": sum,
-        #                     "add_payment_info": sum,
-        #                     "add_to_cart": sum,
-        #                 },
-        #                 fill_value=0,
-        #             )
-        #             .reset_index(level="campaign_name")
-        #             .to_dict(orient="index")
-        #         )
-        #         if campaign_dict:
-        #             campaigns_dict[product] = campaign_dict
 
-        #     by_date_df = df[
-        #         [
-        #             "date",
-        #             "reach",
-        #             "impressions",
-        #             "frequency",
-        #             "spend",
-        #             "cpm",
-        #             "website_ctr",
-        #             "purchase_roas",
-        #             "cost_per_unique_inline_link_click",
-        #             "purchase",
-        #             "landing_page_view",
-        #             "link_click",
-        #             "add_payment_info",
-        #             "add_to_cart",
-        #         ]
-        #     ]
-        #     by_date_dict = pd.DataFrame.pivot_table(
-        #         by_date_df,
-        #         index=["date"],
-        #         values=[
-        #             "reach",
-        #             "impressions",
-        #             "frequency",
-        #             "spend",
-        #             "cpm",
-        #             "website_ctr",
-        #             "purchase_roas",
-        #             "cost_per_unique_inline_link_click",
-        #             "purchase",
-        #             "landing_page_view",
-        #             "link_click",
-        #             "add_payment_info",
-        #             "add_to_cart",
-        #         ],
-        #         aggfunc={
-        #             "reach": sum,
-        #             "impressions": sum,
-        #             "frequency": sum,
-        #             "spend": sum,
-        #             "cpm": sum,
-        #             "website_ctr": sum,
-        #             "purchase_roas": sum,
-        #             "cost_per_unique_inline_link_click": sum,
-        #             "purchase": sum,
-        #             "landing_page_view": sum,
-        #             "link_click": sum,
-        #             "add_payment_info": sum,
-        #             "add_to_cart": sum,
-        #         },
-        #         fill_value=0,
-        #     ).to_dict(orient="index")
-        #     exchange_rate = {}
-        #     for date in date_list:
-        #         exchange_rate_api = requests.get(
-        #             f"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/{date}/currencies/usd/krw.json"
-        #         )
-        #         exchange_rate_api = exchange_rate_api.json()
-        #         exchange_rate[exchange_rate_api["date"]] = round(
-        #             exchange_rate_api["krw"], 2
-        #         )
-
-        #     facebook_dict = {
-        #         "by_date": by_date_dict,
-        #         "campaigns": campaigns_dict,
-        #         "adsets": advertisings_list,
-        #         "exchange_rate": exchange_rate,
-        #     }
-        # else:
-        #     facebook_dict = {
-        #         "by_date": {},
-        #         "campaigns": {},
-        #         "adsets": {},
-        #         "exchange_rate": {},
-        #     }
-
-        # return facebook_dict
         return advertisings_list
 
     def exchange_rate_api(self, date_list):
@@ -433,7 +283,32 @@ class Retrieves(APIView):
         facebook_data = self.facebook_api(advertising_site, date_list)
         exchange_rate_data = self.exchange_rate_api(date_list)
 
-        if not imweb_data:
+        brand = Brand.objects.get(pk=brand)
+        products = brand.product_set.values(
+            "id",
+            "name",
+            "cost",
+            "logistic_fee",
+            "quantity",
+            "gift_quantity",
+        )
+        options = []
+        for product in products:
+            pk = product["id"]
+            selected_product = Product.objects.get(pk=pk)
+            option_query_set = selected_product.options_set.values(
+                "name",
+                "logistic_fee",
+                "quantity",
+                "gift_quantity",
+            )
+            for option in option_query_set:
+                options.append(option)
+
+        exchange_rate_df = pd.DataFrame.from_records(exchange_rate_data)
+        data = {}
+
+        if not imweb_data and not facebook_data:
             imweb_total_df = pd.DataFrame(
                 {
                     "date": date_list,
@@ -452,20 +327,117 @@ class Retrieves(APIView):
                     "sale_expense": 0,
                 }
             )
-        else:
-            brand = Brand.objects.get(pk=brand)
-            products = brand.product_set.values(
-                "id", "name", "cost", "logistic_fee", "quantity", "gift_quantity"
+            facebook_total_df = pd.DataFrame(
+                {
+                    "date": date_list,
+                    "reach": 0,
+                    "impressions": 0,
+                    "frequency": 0.0,
+                    "spend": 0.0,
+                    "cpm": 0.0,
+                    "website_ctr": 0.0,
+                    "purchase_roas": 0.0,
+                    "cost_per_unique_inline_link_click": 0.0,
+                    "purchase": 0,
+                    "landing_page_view": 0,
+                    "link_click": 0,
+                    "add_payment_info": 0,
+                    "add_to_cart": 0,
+                    "conversion_rate": 0.0,
+                }
             )
-            options = []
             for product in products:
-                pk = product["id"]
-                selected_product = Product.objects.get(pk=pk)
-                option_query_set = selected_product.options_set.values(
-                    "name", "logistic_fee", "quantity", "gift_quantity"
+                imweb_product_df = pd.DataFrame(
+                    {
+                        "date": date_list,
+                        "imweb_price": 0,
+                        "imweb_deliv_price": 0,
+                        "imweb_island_price": 0,
+                        "imweb_price_sale": 0,
+                        "imweb_point": 0.0,
+                        "imweb_coupon": 0,
+                        "imweb_membership_discount": 0,
+                        "imweb_period_discount": 0,
+                        "imweb_count": 0,
+                        "logistic_fee": 0,
+                        "product_cost": 0,
+                        "product_profit": 0,
+                        "sale_expense": 0,
+                    }
                 )
-                for option in option_query_set:
-                    options.append(option)
+                facebook_campaign_df = pd.DataFrame(
+                    {
+                        "date": date_list,
+                        "reach": 0,
+                        "impressions": 0,
+                        "frequency": 0.0,
+                        "spend": 0.0,
+                        "cpm": 0.0,
+                        "website_ctr": 0.0,
+                        "purchase_roas": 0.0,
+                        "cost_per_unique_inline_link_click": 0.0,
+                        "purchase": 0,
+                        "landing_page_view": 0,
+                        "link_click": 0,
+                        "add_payment_info": 0,
+                        "add_to_cart": 0,
+                        "conversion_rate": 0.0,
+                    }
+                )
+                facebook_campaign_df = facebook_campaign_df.merge(
+                    exchange_rate_df, on="date"
+                )
+                facebook_campaign_df["facebook_ad_expense_krw"] = (
+                    facebook_campaign_df["spend"] * facebook_campaign_df["krw"]
+                )
+
+                product_total_df = imweb_product_df.merge(
+                    facebook_campaign_df, on="date"
+                )
+                product_total_df["expense"] = (
+                    product_total_df["logistic_fee"]
+                    + product_total_df["sale_expense"]
+                    + product_total_df["facebook_ad_expense_krw"]
+                    + product_total_df["imweb_price_sale"]
+                    + product_total_df["imweb_point"]
+                    + product_total_df["imweb_coupon"]
+                    + product_total_df["imweb_membership_discount"]
+                    + product_total_df["imweb_period_discount"]
+                )
+                product_total_df["operating_profit"] = (
+                    product_total_df["product_profit"] - product_total_df["expense"]
+                )
+                product_total_df["operating_profit_rate"] = (
+                    product_total_df["operating_profit"]
+                    / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["operating_profit_rate"] = (
+                    product_total_df["operating_profit_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df["product_cost_rate"] = (
+                    product_total_df["product_cost"] / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["product_cost_rate"] = (
+                    product_total_df["product_cost_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df["facebook_ad_expense_krw_rate"] = (
+                    product_total_df["facebook_ad_expense_krw"]
+                    / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["facebook_ad_expense_krw_rate"] = (
+                    product_total_df["facebook_ad_expense_krw_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df = product_total_df.set_index("date")
+                product_total = product_total_df.to_dict("index")
+                data[product["name"]] = product_total
+
+        elif imweb_data and not facebook_data:
             imweb_df = pd.DataFrame.from_records(imweb_data)
             products_df = pd.DataFrame.from_records(products)
             products_df = products_df.drop("id", axis=1).rename(
@@ -477,16 +449,23 @@ class Retrieves(APIView):
             imweb_df = imweb_df.merge(products_df, on="imweb_prod_name").drop(
                 ["logistic_fee", "quantity", "gift_quantity"], axis=1
             )
+
             imweb_without_option_df = imweb_df[imweb_df["imweb_option"] == "No option"]
+
             imweb_with_option_df = imweb_df[imweb_df["imweb_option"] != "No option"]
+
             products_df = products_df.drop("cost", axis=1)
+
             imweb_product_merge_df = imweb_without_option_df.merge(
                 products_df, on="imweb_prod_name"
             )
+
             imweb_option_merge_df = imweb_with_option_df.merge(
                 options_df, on="imweb_option"
             )
+
             imweb_df = pd.concat([imweb_product_merge_df, imweb_option_merge_df])
+
             imweb_df["shipment_quantity"] = (
                 imweb_df["imweb_count"] * imweb_df["quantity"]
             ) + (imweb_df["imweb_count"] * imweb_df["gift_quantity"])
@@ -497,6 +476,7 @@ class Retrieves(APIView):
                 - imweb_df["product_cost"]
             )
             imweb_df["sale_expense"] = imweb_df["imweb_price"] * 0.033
+
             imweb_total_df = (
                 imweb_df.groupby(by="imweb_order_time", as_index=False)
                 .agg(
@@ -541,7 +521,6 @@ class Retrieves(APIView):
                         ]
                     )
                     imweb_total_df = pd.concat([imweb_total_df, imweb_without_day_df])
-        if not facebook_data:
             facebook_total_df = pd.DataFrame(
                 {
                     "date": date_list,
@@ -561,7 +540,147 @@ class Retrieves(APIView):
                     "conversion_rate": 0.0,
                 }
             )
-        else:
+            for product in products:
+                imweb_product_df = imweb_df[
+                    imweb_df["imweb_prod_name"] == product["name"]
+                ]
+                imweb_product_df = (
+                    imweb_product_df.groupby(by="imweb_order_time", as_index=False)
+                    .agg(
+                        {
+                            "imweb_price": "sum",
+                            "imweb_deliv_price": "sum",
+                            "imweb_island_price": "sum",
+                            "imweb_price_sale": "sum",
+                            "imweb_point": "sum",
+                            "imweb_coupon": "sum",
+                            "imweb_membership_discount": "sum",
+                            "imweb_period_discount": "sum",
+                            "imweb_count": "sum",
+                            "logistic_fee": "sum",
+                            "product_cost": "sum",
+                            "product_profit": "sum",
+                            "sale_expense": "sum",
+                        }
+                    )
+                    .rename(columns={"imweb_order_time": "date"})
+                )
+                for d in date_list:
+                    if imweb_product_df[imweb_product_df["date"] == d].empty:
+                        imweb_without_day_df = pd.DataFrame(
+                            [
+                                {
+                                    "date": d,
+                                    "imweb_price": 0,
+                                    "imweb_deliv_price": 0,
+                                    "imweb_island_price": 0,
+                                    "imweb_price_sale": 0,
+                                    "imweb_point": 0.0,
+                                    "imweb_coupon": 0,
+                                    "imweb_membership_discount": 0,
+                                    "imweb_period_discount": 0,
+                                    "imweb_count": 0,
+                                    "logistic_fee": 0,
+                                    "product_cost": 0,
+                                    "product_profit": 0,
+                                    "sale_expense": 0,
+                                }
+                            ]
+                        )
+                        imweb_product_df = pd.concat(
+                            [imweb_product_df, imweb_without_day_df]
+                        )
+                facebook_campaign_df = pd.DataFrame(
+                    {
+                        "date": date_list,
+                        "reach": 0,
+                        "impressions": 0,
+                        "frequency": 0.0,
+                        "spend": 0.0,
+                        "cpm": 0.0,
+                        "website_ctr": 0.0,
+                        "purchase_roas": 0.0,
+                        "cost_per_unique_inline_link_click": 0.0,
+                        "purchase": 0,
+                        "landing_page_view": 0,
+                        "link_click": 0,
+                        "add_payment_info": 0,
+                        "add_to_cart": 0,
+                        "conversion_rate": 0.0,
+                    }
+                )
+                facebook_campaign_df = facebook_campaign_df.merge(
+                    exchange_rate_df, on="date"
+                )
+                facebook_campaign_df["facebook_ad_expense_krw"] = (
+                    facebook_campaign_df["spend"] * facebook_campaign_df["krw"]
+                )
+
+                product_total_df = imweb_product_df.merge(
+                    facebook_campaign_df, on="date"
+                )
+                product_total_df["expense"] = (
+                    product_total_df["logistic_fee"]
+                    + product_total_df["sale_expense"]
+                    + product_total_df["facebook_ad_expense_krw"]
+                    + product_total_df["imweb_price_sale"]
+                    + product_total_df["imweb_point"]
+                    + product_total_df["imweb_coupon"]
+                    + product_total_df["imweb_membership_discount"]
+                    + product_total_df["imweb_period_discount"]
+                )
+                product_total_df["operating_profit"] = (
+                    product_total_df["product_profit"] - product_total_df["expense"]
+                )
+                product_total_df["operating_profit_rate"] = (
+                    product_total_df["operating_profit"]
+                    / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["operating_profit_rate"] = (
+                    product_total_df["operating_profit_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df["product_cost_rate"] = (
+                    product_total_df["product_cost"] / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["product_cost_rate"] = (
+                    product_total_df["product_cost_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df["facebook_ad_expense_krw_rate"] = (
+                    product_total_df["facebook_ad_expense_krw"]
+                    / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["facebook_ad_expense_krw_rate"] = (
+                    product_total_df["facebook_ad_expense_krw_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df = product_total_df.set_index("date")
+                product_total = product_total_df.to_dict("index")
+                data[product["name"]] = product_total
+
+        elif not imweb_data and facebook_data:
+            imweb_total_df = pd.DataFrame(
+                {
+                    "date": date_list,
+                    "imweb_price": 0,
+                    "imweb_deliv_price": 0,
+                    "imweb_island_price": 0,
+                    "imweb_price_sale": 0,
+                    "imweb_point": 0.0,
+                    "imweb_coupon": 0,
+                    "imweb_membership_discount": 0,
+                    "imweb_period_discount": 0,
+                    "imweb_count": 0,
+                    "logistic_fee": 0,
+                    "product_cost": 0,
+                    "product_profit": 0,
+                    "sale_expense": 0,
+                }
+            )
             facebook_df = pd.DataFrame.from_records(facebook_data)
             facebook_total_df = facebook_df.groupby(by="date", as_index=False).agg(
                 {
@@ -612,11 +731,428 @@ class Retrieves(APIView):
                     facebook_total_df = pd.concat(
                         [facebook_total_df, facebook_without_day_df]
                     )
-        exchange_rate_df = pd.DataFrame.from_records(exchange_rate_data)
-        facebook_total_df = facebook_total_df.merge(
-            exchange_rate_df,
-            on="date",
-        )
+            for product in products:
+                imweb_product_df = pd.DataFrame(
+                    {
+                        "date": date_list,
+                        "imweb_price": 0,
+                        "imweb_deliv_price": 0,
+                        "imweb_island_price": 0,
+                        "imweb_price_sale": 0,
+                        "imweb_point": 0.0,
+                        "imweb_coupon": 0,
+                        "imweb_membership_discount": 0,
+                        "imweb_period_discount": 0,
+                        "imweb_count": 0,
+                        "logistic_fee": 0,
+                        "product_cost": 0,
+                        "product_profit": 0,
+                        "sale_expense": 0,
+                    }
+                )
+                facebook_campaign_df = facebook_df[
+                    facebook_df["campaign_name"] == product["name"]
+                ]
+                facebook_campaign_df = facebook_campaign_df.groupby(
+                    by="date", as_index=False
+                ).agg(
+                    {
+                        "reach": "sum",
+                        "impressions": "sum",
+                        "frequency": "sum",
+                        "spend": "sum",
+                        "cpm": "sum",
+                        "website_ctr": "sum",
+                        "purchase_roas": "sum",
+                        "cost_per_unique_inline_link_click": "sum",
+                        "purchase": "sum",
+                        "landing_page_view": "sum",
+                        "link_click": "sum",
+                        "add_payment_info": "sum",
+                        "add_to_cart": "sum",
+                    }
+                )
+                facebook_campaign_df["conversion_rate"] = (
+                    facebook_campaign_df["purchase"]
+                    / facebook_campaign_df["landing_page_view"]
+                ) * 100
+                facebook_campaign_df["conversion_rate"] = facebook_campaign_df[
+                    "conversion_rate"
+                ].fillna(0.0)
+                for d in date_list:
+                    if facebook_campaign_df[facebook_campaign_df["date"] == d].empty:
+                        facebook_without_day_df = pd.DataFrame(
+                            [
+                                {
+                                    "date": d,
+                                    "reach": 0,
+                                    "impressions": 0,
+                                    "frequency": 0.0,
+                                    "spend": 0.0,
+                                    "cpm": 0.0,
+                                    "website_ctr": 0.0,
+                                    "purchase_roas": 0.0,
+                                    "cost_per_unique_inline_link_click": 0.0,
+                                    "purchase": 0,
+                                    "landing_page_view": 0,
+                                    "link_click": 0,
+                                    "add_payment_info": 0,
+                                    "add_to_cart": 0,
+                                    "conversion_rate": 0.0,
+                                }
+                            ]
+                        )
+                        facebook_campaign_df = pd.concat(
+                            [facebook_campaign_df, facebook_without_day_df]
+                        )
+                facebook_campaign_df = facebook_campaign_df.merge(
+                    exchange_rate_df, on="date"
+                )
+                facebook_campaign_df["facebook_ad_expense_krw"] = (
+                    facebook_campaign_df["spend"] * facebook_campaign_df["krw"]
+                )
+
+                product_total_df = imweb_product_df.merge(
+                    facebook_campaign_df, on="date"
+                )
+                product_total_df["expense"] = (
+                    product_total_df["logistic_fee"]
+                    + product_total_df["sale_expense"]
+                    + product_total_df["facebook_ad_expense_krw"]
+                    + product_total_df["imweb_price_sale"]
+                    + product_total_df["imweb_point"]
+                    + product_total_df["imweb_coupon"]
+                    + product_total_df["imweb_membership_discount"]
+                    + product_total_df["imweb_period_discount"]
+                )
+                product_total_df["operating_profit"] = (
+                    product_total_df["product_profit"] - product_total_df["expense"]
+                )
+                product_total_df["operating_profit_rate"] = (
+                    product_total_df["operating_profit"]
+                    / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["operating_profit_rate"] = (
+                    product_total_df["operating_profit_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df["product_cost_rate"] = (
+                    product_total_df["product_cost"] / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["product_cost_rate"] = (
+                    product_total_df["product_cost_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df["facebook_ad_expense_krw_rate"] = (
+                    product_total_df["facebook_ad_expense_krw"]
+                    / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["facebook_ad_expense_krw_rate"] = (
+                    product_total_df["facebook_ad_expense_krw_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df = product_total_df.set_index("date")
+                product_total = product_total_df.to_dict("index")
+                data[product["name"]] = product_total
+
+        elif imweb_data and facebook_data:
+            imweb_df = pd.DataFrame.from_records(imweb_data)
+            products_df = pd.DataFrame.from_records(products)
+            products_df = products_df.drop("id", axis=1).rename(
+                columns={"name": "imweb_prod_name"}
+            )
+            options_df = pd.DataFrame.from_records(options)
+            options_df = options_df.rename(columns={"name": "imweb_option"})
+
+            imweb_df = imweb_df.merge(products_df, on="imweb_prod_name").drop(
+                ["logistic_fee", "quantity", "gift_quantity"], axis=1
+            )
+
+            imweb_without_option_df = imweb_df[imweb_df["imweb_option"] == "No option"]
+
+            imweb_with_option_df = imweb_df[imweb_df["imweb_option"] != "No option"]
+
+            products_df = products_df.drop("cost", axis=1)
+
+            imweb_product_merge_df = imweb_without_option_df.merge(
+                products_df, on="imweb_prod_name"
+            )
+
+            imweb_option_merge_df = imweb_with_option_df.merge(
+                options_df, on="imweb_option"
+            )
+
+            imweb_df = pd.concat([imweb_product_merge_df, imweb_option_merge_df])
+
+            imweb_df["shipment_quantity"] = (
+                imweb_df["imweb_count"] * imweb_df["quantity"]
+            ) + (imweb_df["imweb_count"] * imweb_df["gift_quantity"])
+            imweb_df["product_cost"] = imweb_df["cost"] * imweb_df["shipment_quantity"]
+            imweb_df["product_profit"] = (
+                imweb_df["imweb_price"]
+                + imweb_df["imweb_deliv_price"]
+                - imweb_df["product_cost"]
+            )
+            imweb_df["sale_expense"] = imweb_df["imweb_price"] * 0.033
+
+            imweb_total_df = (
+                imweb_df.groupby(by="imweb_order_time", as_index=False)
+                .agg(
+                    {
+                        "imweb_price": "sum",
+                        "imweb_deliv_price": "sum",
+                        "imweb_island_price": "sum",
+                        "imweb_price_sale": "sum",
+                        "imweb_point": "sum",
+                        "imweb_coupon": "sum",
+                        "imweb_membership_discount": "sum",
+                        "imweb_period_discount": "sum",
+                        "imweb_count": "sum",
+                        "logistic_fee": "sum",
+                        "product_cost": "sum",
+                        "product_profit": "sum",
+                        "sale_expense": "sum",
+                    }
+                )
+                .rename(columns={"imweb_order_time": "date"})
+            )
+            for d in date_list:
+                if imweb_total_df[imweb_total_df["date"] == d].empty:
+                    imweb_without_day_df = pd.DataFrame(
+                        [
+                            {
+                                "date": d,
+                                "imweb_price": 0,
+                                "imweb_deliv_price": 0,
+                                "imweb_island_price": 0,
+                                "imweb_price_sale": 0,
+                                "imweb_point": 0.0,
+                                "imweb_coupon": 0,
+                                "imweb_membership_discount": 0,
+                                "imweb_period_discount": 0,
+                                "imweb_count": 0,
+                                "logistic_fee": 0,
+                                "product_cost": 0,
+                                "product_profit": 0,
+                                "sale_expense": 0,
+                            }
+                        ]
+                    )
+                    imweb_total_df = pd.concat([imweb_total_df, imweb_without_day_df])
+            facebook_df = pd.DataFrame.from_records(facebook_data)
+            facebook_total_df = facebook_df.groupby(by="date", as_index=False).agg(
+                {
+                    "reach": "sum",
+                    "impressions": "sum",
+                    "frequency": "sum",
+                    "spend": "sum",
+                    "cpm": "sum",
+                    "website_ctr": "sum",
+                    "purchase_roas": "sum",
+                    "cost_per_unique_inline_link_click": "sum",
+                    "purchase": "sum",
+                    "landing_page_view": "sum",
+                    "link_click": "sum",
+                    "add_payment_info": "sum",
+                    "add_to_cart": "sum",
+                }
+            )
+            facebook_total_df["conversion_rate"] = (
+                facebook_total_df["purchase"] / facebook_total_df["landing_page_view"]
+            ) * 100
+            facebook_total_df["conversion_rate"] = facebook_total_df[
+                "conversion_rate"
+            ].fillna(0.0)
+            for d in date_list:
+                if facebook_total_df[facebook_total_df["date"] == d].empty:
+                    facebook_without_day_df = pd.DataFrame(
+                        [
+                            {
+                                "date": d,
+                                "reach": 0,
+                                "impressions": 0,
+                                "frequency": 0.0,
+                                "spend": 0.0,
+                                "cpm": 0.0,
+                                "website_ctr": 0.0,
+                                "purchase_roas": 0.0,
+                                "cost_per_unique_inline_link_click": 0.0,
+                                "purchase": 0,
+                                "landing_page_view": 0,
+                                "link_click": 0,
+                                "add_payment_info": 0,
+                                "add_to_cart": 0,
+                                "conversion_rate": 0.0,
+                            }
+                        ]
+                    )
+                    facebook_total_df = pd.concat(
+                        [facebook_total_df, facebook_without_day_df]
+                    )
+
+            for product in products:
+                imweb_product_df = imweb_df[
+                    imweb_df["imweb_prod_name"] == product["name"]
+                ]
+                imweb_product_df = (
+                    imweb_product_df.groupby(by="imweb_order_time", as_index=False)
+                    .agg(
+                        {
+                            "imweb_price": "sum",
+                            "imweb_deliv_price": "sum",
+                            "imweb_island_price": "sum",
+                            "imweb_price_sale": "sum",
+                            "imweb_point": "sum",
+                            "imweb_coupon": "sum",
+                            "imweb_membership_discount": "sum",
+                            "imweb_period_discount": "sum",
+                            "imweb_count": "sum",
+                            "logistic_fee": "sum",
+                            "product_cost": "sum",
+                            "product_profit": "sum",
+                            "sale_expense": "sum",
+                        }
+                    )
+                    .rename(columns={"imweb_order_time": "date"})
+                )
+                for d in date_list:
+                    if imweb_product_df[imweb_product_df["date"] == d].empty:
+                        imweb_without_day_df = pd.DataFrame(
+                            [
+                                {
+                                    "date": d,
+                                    "imweb_price": 0,
+                                    "imweb_deliv_price": 0,
+                                    "imweb_island_price": 0,
+                                    "imweb_price_sale": 0,
+                                    "imweb_point": 0.0,
+                                    "imweb_coupon": 0,
+                                    "imweb_membership_discount": 0,
+                                    "imweb_period_discount": 0,
+                                    "imweb_count": 0,
+                                    "logistic_fee": 0,
+                                    "product_cost": 0,
+                                    "product_profit": 0,
+                                    "sale_expense": 0,
+                                }
+                            ]
+                        )
+                        imweb_product_df = pd.concat(
+                            [imweb_product_df, imweb_without_day_df]
+                        )
+
+                facebook_campaign_df = facebook_df[
+                    facebook_df["campaign_name"] == product["name"]
+                ]
+                facebook_campaign_df = facebook_campaign_df.groupby(
+                    by="date", as_index=False
+                ).agg(
+                    {
+                        "reach": "sum",
+                        "impressions": "sum",
+                        "frequency": "sum",
+                        "spend": "sum",
+                        "cpm": "sum",
+                        "website_ctr": "sum",
+                        "purchase_roas": "sum",
+                        "cost_per_unique_inline_link_click": "sum",
+                        "purchase": "sum",
+                        "landing_page_view": "sum",
+                        "link_click": "sum",
+                        "add_payment_info": "sum",
+                        "add_to_cart": "sum",
+                    }
+                )
+                facebook_campaign_df["conversion_rate"] = (
+                    facebook_campaign_df["purchase"]
+                    / facebook_campaign_df["landing_page_view"]
+                ) * 100
+                facebook_campaign_df["conversion_rate"] = facebook_campaign_df[
+                    "conversion_rate"
+                ].fillna(0.0)
+                for d in date_list:
+                    if facebook_campaign_df[facebook_campaign_df["date"] == d].empty:
+                        facebook_without_day_df = pd.DataFrame(
+                            [
+                                {
+                                    "date": d,
+                                    "reach": 0,
+                                    "impressions": 0,
+                                    "frequency": 0.0,
+                                    "spend": 0.0,
+                                    "cpm": 0.0,
+                                    "website_ctr": 0.0,
+                                    "purchase_roas": 0.0,
+                                    "cost_per_unique_inline_link_click": 0.0,
+                                    "purchase": 0,
+                                    "landing_page_view": 0,
+                                    "link_click": 0,
+                                    "add_payment_info": 0,
+                                    "add_to_cart": 0,
+                                    "conversion_rate": 0.0,
+                                }
+                            ]
+                        )
+                        facebook_campaign_df = pd.concat(
+                            [facebook_campaign_df, facebook_without_day_df]
+                        )
+                facebook_campaign_df = facebook_campaign_df.merge(
+                    exchange_rate_df, on="date"
+                )
+                facebook_campaign_df["facebook_ad_expense_krw"] = (
+                    facebook_campaign_df["spend"] * facebook_campaign_df["krw"]
+                )
+
+                product_total_df = imweb_product_df.merge(
+                    facebook_campaign_df, on="date"
+                )
+                product_total_df["expense"] = (
+                    product_total_df["logistic_fee"]
+                    + product_total_df["sale_expense"]
+                    + product_total_df["facebook_ad_expense_krw"]
+                    + product_total_df["imweb_price_sale"]
+                    + product_total_df["imweb_point"]
+                    + product_total_df["imweb_coupon"]
+                    + product_total_df["imweb_membership_discount"]
+                    + product_total_df["imweb_period_discount"]
+                )
+                product_total_df["operating_profit"] = (
+                    product_total_df["product_profit"] - product_total_df["expense"]
+                )
+                product_total_df["operating_profit_rate"] = (
+                    product_total_df["operating_profit"]
+                    / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["operating_profit_rate"] = (
+                    product_total_df["operating_profit_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df["product_cost_rate"] = (
+                    product_total_df["product_cost"] / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["product_cost_rate"] = (
+                    product_total_df["product_cost_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df["facebook_ad_expense_krw_rate"] = (
+                    product_total_df["facebook_ad_expense_krw"]
+                    / product_total_df["imweb_price"]
+                ) * 100
+                product_total_df["facebook_ad_expense_krw_rate"] = (
+                    product_total_df["facebook_ad_expense_krw_rate"]
+                    .replace([np.inf, -np.inf], np.nan)
+                    .fillna(0.0)
+                )
+                product_total_df = product_total_df.set_index("date")
+                product_total = product_total_df.to_dict("index")
+                data[product["name"]] = product_total
+
+        facebook_total_df = facebook_total_df.merge(exchange_rate_df, on="date")
         facebook_total_df["facebook_ad_expense_krw"] = (
             facebook_total_df["spend"] * facebook_total_df["krw"]
         )
@@ -657,4 +1193,6 @@ class Retrieves(APIView):
         )
         total_df = total_df.set_index("date")
         total = total_df.to_dict("index")
-        return Response(total)
+        data["total"] = total
+
+        return Response(data)
