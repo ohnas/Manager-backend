@@ -282,8 +282,6 @@ class Retrieves(APIView):
         imweb_data = self.imweb_api(sale_site, from_date, to_date)
         facebook_data = self.facebook_api(advertising_site, date_list)
         exchange_rate_data = self.exchange_rate_api(date_list)
-        print(imweb_data)
-        print(facebook_data)
 
         brand = Brand.objects.get(pk=brand)
         products = brand.product_set.values(
@@ -615,6 +613,23 @@ class Retrieves(APIView):
                                 imweb_option_df = pd.concat(
                                     [imweb_option_df, imweb_without_day_df]
                                 )
+                            if imweb_product_only_count_df[
+                                imweb_product_only_count_df["date"] == d
+                            ].empty:
+                                imweb_without_day_product_df = pd.DataFrame(
+                                    [
+                                        {
+                                            "date": d,
+                                            "imweb_count": 0,
+                                        }
+                                    ]
+                                )
+                                imweb_product_only_count_df = pd.concat(
+                                    [
+                                        imweb_product_only_count_df,
+                                        imweb_without_day_product_df,
+                                    ]
+                                )
                         imweb_option_df = imweb_option_df.merge(
                             imweb_product_only_count_df, on="date"
                         )
@@ -622,6 +637,9 @@ class Retrieves(APIView):
                             imweb_option_df["option_count"]
                             / imweb_option_df["imweb_count"]
                         ) * 100
+                        imweb_option_df["option_rate"] = imweb_option_df[
+                            "option_rate"
+                        ].fillna(0.0)
                         imweb_option_df = imweb_option_df.drop(
                             ["imweb_option", "imweb_count"], axis=1
                         ).set_index("date")
@@ -1154,6 +1172,23 @@ class Retrieves(APIView):
                                 imweb_option_df = pd.concat(
                                     [imweb_option_df, imweb_without_day_df]
                                 )
+                            if imweb_product_only_count_df[
+                                imweb_product_only_count_df["date"] == d
+                            ].empty:
+                                imweb_without_day_product_df = pd.DataFrame(
+                                    [
+                                        {
+                                            "date": d,
+                                            "imweb_count": 0,
+                                        }
+                                    ]
+                                )
+                                imweb_product_only_count_df = pd.concat(
+                                    [
+                                        imweb_product_only_count_df,
+                                        imweb_without_day_product_df,
+                                    ]
+                                )
                         imweb_option_df = imweb_option_df.merge(
                             imweb_product_only_count_df, on="date"
                         )
@@ -1161,6 +1196,9 @@ class Retrieves(APIView):
                             imweb_option_df["option_count"]
                             / imweb_option_df["imweb_count"]
                         ) * 100
+                        imweb_option_df["option_rate"] = imweb_option_df[
+                            "option_rate"
+                        ].fillna(0.0)
                         imweb_option_df = imweb_option_df.drop(
                             ["imweb_option", "imweb_count"], axis=1
                         ).set_index("date")
