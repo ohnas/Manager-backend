@@ -363,6 +363,7 @@ class Retrieves(APIView):
                         "product_cost": 0,
                         "product_profit": 0,
                         "sale_expense": 0,
+                        "shipment_quantity": 0,
                     }
                 )
                 pk = product["id"]
@@ -663,6 +664,7 @@ class Retrieves(APIView):
                             "product_cost": "sum",
                             "product_profit": "sum",
                             "sale_expense": "sum",
+                            "shipment_quantity": "sum",
                         }
                     )
                     .rename(columns={"imweb_order_time": "date"})
@@ -686,6 +688,7 @@ class Retrieves(APIView):
                                     "product_cost": 0,
                                     "product_profit": 0,
                                     "sale_expense": 0,
+                                    "shipment_quantity": 0,
                                 }
                             ]
                         )
@@ -853,6 +856,7 @@ class Retrieves(APIView):
                         "product_cost": 0,
                         "product_profit": 0,
                         "sale_expense": 0,
+                        "shipment_quantity": 0,
                     }
                 )
                 pk = product["id"]
@@ -1222,6 +1226,7 @@ class Retrieves(APIView):
                             "product_cost": "sum",
                             "product_profit": "sum",
                             "sale_expense": "sum",
+                            "shipment_quantity": "sum",
                         }
                     )
                     .rename(columns={"imweb_order_time": "date"})
@@ -1245,6 +1250,7 @@ class Retrieves(APIView):
                                     "product_cost": 0,
                                     "product_profit": 0,
                                     "sale_expense": 0,
+                                    "shipment_quantity": 0,
                                 }
                             ]
                         )
