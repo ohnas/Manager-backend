@@ -8,6 +8,7 @@ from brands.models import Brand
 from products.models import Product
 from events.models import Event
 from events.serializers import EventSerializer
+from datetime import datetime, timedelta
 
 # Create your views here.
 
@@ -26,9 +27,19 @@ class Events(APIView):
         brand = self.get_object(brand_pk)
         from_date = request.query_params["dateFrom"]
         to_date = request.query_params["dateTo"]
-        events = brand.event_set.filter(event_date__range=(from_date, to_date))
-        serializer = EventSerializer(events, many=True)
-        return Response(serializer.data)
+
+        selected_date_from = datetime.strptime(from_date, "%Y-%m-%d")
+        selected_date_to = datetime.strptime(to_date, "%Y-%m-%d")
+        delta = timedelta(days=1)
+        date_list = []
+        while selected_date_from <= selected_date_to:
+            date_list.append(selected_date_from.strftime("%Y-%m-%d"))
+            selected_date_from += delta
+        events_count = {}
+        for date in date_list:
+            count = brand.event_set.filter(event_date=date).count()
+            events_count[date] = count
+        return Response(events_count)
 
 
 class CreateEvent(APIView):
