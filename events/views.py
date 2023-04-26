@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 # Create your views here.
 
 
-class Events(APIView):
+class EventsCount(APIView):
 
     permission_classes = [IsAuthenticated]
 
@@ -28,6 +28,10 @@ class Events(APIView):
         from_date = request.query_params["dateFrom"]
         to_date = request.query_params["dateTo"]
 
+        total_count = brand.event_set.filter(
+            event_date__range=(from_date, to_date)
+        ).count()
+
         selected_date_from = datetime.strptime(from_date, "%Y-%m-%d")
         selected_date_to = datetime.strptime(to_date, "%Y-%m-%d")
         delta = timedelta(days=1)
@@ -35,7 +39,9 @@ class Events(APIView):
         while selected_date_from <= selected_date_to:
             date_list.append(selected_date_from.strftime("%Y-%m-%d"))
             selected_date_from += delta
-        events_count = {}
+        events_count = {
+            "sum": total_count,
+        }
         for date in date_list:
             count = brand.event_set.filter(event_date=date).count()
             events_count[date] = count
