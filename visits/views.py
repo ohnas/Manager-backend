@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Sum
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -7,6 +8,7 @@ from rest_framework import status
 from brands.models import Brand
 from visits.models import Visit
 from visits.serializers import VisitSerializer
+from datetime import datetime, timedelta
 
 # Create your views here.
 
@@ -25,9 +27,29 @@ class Visits(APIView):
         brand = self.get_object(brand_pk)
         from_date = request.query_params["dateFrom"]
         to_date = request.query_params["dateTo"]
-        visit = brand.visit_set.filter(visit_date__range=(from_date, to_date))
-        serializer = VisitSerializer(visit, many=True)
-        return Response(serializer.data)
+
+        sum = brand.visit_set.filter(visit_date__range=(from_date, to_date)).aggregate(
+            Sum("num")
+        )
+
+        selected_date_from = datetime.strptime(from_date, "%Y-%m-%d")
+        selected_date_to = datetime.strptime(to_date, "%Y-%m-%d")
+        delta = timedelta(days=1)
+        date_list = []
+        while selected_date_from <= selected_date_to:
+            date_list.append(selected_date_from.strftime("%Y-%m-%d"))
+            selected_date_from += delta
+        visits = {
+            "sum": sum["num__sum"],
+        }
+        for date in date_list:
+            try:
+                visit = brand.visit_set.get(visit_date=date)
+                visit_num = visit.num
+            except Visit.DoesNotExist:
+                visit_num = 0
+            visits[date] = visit_num
+        return Response(visits)
 
 
 class CreateVisit(APIView):

@@ -45,10 +45,15 @@ class Pages(APIView):
         for date in date_list:
             try:
                 page = brand.page_set.get(page_date=date)
+                pk = page.pk
                 page_view = page.view
             except Page.DoesNotExist:
+                pk = "None"
                 page_view = 0
-            pages[date] = page_view
+            pages[date] = {
+                "pk": pk,
+                "view": page_view,
+            }
         return Response(pages)
 
 
@@ -68,20 +73,16 @@ class CreatePage(APIView):
         page_date = request.data.get("page_date")
         if not view or not page_date:
             raise ParseError
-        is_page = Page.objects.filter(page_date=page_date, brand=brand)
-        if is_page.exists():
-            raise ParseError("page is already.")
+        serializer = PageSerializer(data=request.data)
+        if serializer.is_valid():
+            with transaction.atomic():
+                page = serializer.save(
+                    brand=brand,
+                )
+                serializer = PageSerializer(page)
+                return Response(serializer.data)
         else:
-            serializer = PageSerializer(data=request.data)
-            if serializer.is_valid():
-                with transaction.atomic():
-                    page = serializer.save(
-                        brand=brand,
-                    )
-                    serializer = PageSerializer(page)
-                    return Response(serializer.data)
-            else:
-                return Response(serializer.errors)
+            return Response(serializer.errors)
 
 
 class UpdatePage(APIView):
@@ -99,7 +100,13 @@ class UpdatePage(APIView):
         serializer = PageSerializer(page)
         return Response(serializer.data)
 
-    def delete(self, request, pk):
+    def put(self, request, pk):
         page = self.get_object(pk)
-        page.delete()
-        return Response(status=status.HTTP_200_OK)
+        serializer = PageSerializer(page, data=request.data, partial=True)
+        if serializer.is_valid():
+            with transaction.atomic():
+                page = serializer.save()
+                serializer = PageSerializer(page)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
