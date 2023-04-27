@@ -68,20 +68,16 @@ class CreateVisit(APIView):
         visit_date = request.data.get("visit_date")
         if not num or not visit_date:
             raise ParseError
-        is_vist = Visit.objects.filter(visit_date=visit_date, brand=brand)
-        if is_vist.exists():
-            raise ParseError("visit is already.")
+        serializer = VisitSerializer(data=request.data)
+        if serializer.is_valid():
+            with transaction.atomic():
+                visit = serializer.save(
+                    brand=brand,
+                )
+                serializer = VisitSerializer(visit)
+                return Response(serializer.data)
         else:
-            serializer = VisitSerializer(data=request.data)
-            if serializer.is_valid():
-                with transaction.atomic():
-                    visit = serializer.save(
-                        brand=brand,
-                    )
-                    serializer = VisitSerializer(visit)
-                    return Response(serializer.data)
-            else:
-                return Response(serializer.errors)
+            return Response(serializer.errors)
 
 
 class UpdateVisit(APIView):
@@ -99,7 +95,13 @@ class UpdateVisit(APIView):
         serializer = VisitSerializer(visit)
         return Response(serializer.data)
 
-    def delete(self, request, pk):
+    def put(self, request, pk):
         visit = self.get_object(pk)
-        visit.delete()
-        return Response(status=status.HTTP_200_OK)
+        serializer = VisitSerializer(visit, data=request.data, partial=True)
+        if serializer.is_valid():
+            with transaction.atomic():
+                visit = serializer.save()
+                serializer = VisitSerializer(visit)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
