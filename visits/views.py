@@ -45,10 +45,15 @@ class Visits(APIView):
         for date in date_list:
             try:
                 visit = brand.visit_set.get(visit_date=date)
+                pk = visit.pk
                 visit_num = visit.num
             except Visit.DoesNotExist:
+                pk = "None"
                 visit_num = 0
-            visits[date] = visit_num
+            visits[date] = {
+                "pk": pk,
+                "num": visit_num,
+            }
         return Response(visits)
 
 
