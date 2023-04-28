@@ -48,6 +48,41 @@ class EventsCount(APIView):
         return Response(events_count)
 
 
+class Events(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, brand_pk):
+        try:
+            return Brand.objects.get(pk=brand_pk)
+        except Brand.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, brand_pk):
+        brand = self.get_object(brand_pk)
+        from_date = request.query_params["dateFrom"]
+        to_date = request.query_params["dateTo"]
+
+        selected_date_from = datetime.strptime(from_date, "%Y-%m-%d")
+        selected_date_to = datetime.strptime(to_date, "%Y-%m-%d")
+        delta = timedelta(days=1)
+        date_list = []
+        while selected_date_from <= selected_date_to:
+            date_list.append(selected_date_from.strftime("%Y-%m-%d"))
+            selected_date_from += delta
+        events = {}
+        products = brand.product_set.all().values("pk", "name")
+        for product in products:
+            events[product["name"]] = {}
+            for date in date_list:
+                current_product = Product.objects.get(pk=product["pk"])
+                event_list = current_product.event_set.filter(event_date=date).values(
+                    "pk", "name"
+                )
+                events[product["name"]][date] = event_list
+        return Response(events)
+
+
 class CreateEvent(APIView):
 
     permission_classes = [IsAuthenticated]
