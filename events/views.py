@@ -129,6 +129,17 @@ class UpdateEvent(APIView):
         serializer = EventSerializer(event)
         return Response(serializer.data)
 
+    def put(self, request, pk):
+        event = self.get_object(pk)
+        serializer = EventSerializer(event, data=request.data, partial=True)
+        if serializer.is_valid():
+            with transaction.atomic():
+                event = serializer.save()
+                serializer = EventSerializer(event)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
+
     def delete(self, request, pk):
         event = self.get_object(pk)
         event.delete()
