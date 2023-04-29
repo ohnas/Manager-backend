@@ -1428,3 +1428,91 @@ class Retrieves(APIView):
         data["sum"] = total_sum
 
         return Response(data)
+
+
+class Unlistings(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Brand.objects.get(pk=pk)
+        except Brand.DoesNotExist:
+            raise NotFound
+
+    def imweb_api(self, brand):
+        site = brand.site_set.get(kind="sale_site")
+        KEY = site.api_key
+        SECREAT = site.secret_key
+        access_token = requests.get(
+            f"https://api.imweb.me/v2/auth?key={KEY}&secret={SECREAT}"
+        )
+        access_token = access_token.json()
+        access_token = access_token["access_token"]
+        headers = {"access-token": access_token, "version": "latest"}
+        data = requests.get(
+            f"https://api.imweb.me/v2/shop/products?prod_status=sale",
+            headers=headers,
+        )
+        data = data.json()
+        data = data["data"]
+        products = data["list"]
+        products_name = []
+        product_list = []
+        for product in products:
+            product_list.append(
+                {
+                    "no": product["no"],
+                    "name": product["name"],
+                }
+            )
+            products_name.append(product["name"])
+        options_name = []
+        for product_no in product_list:
+            time.sleep(0.5)
+            data = requests.get(
+                f"https://api.imweb.me/v2/shop/products/{product_no['no']}/options",
+                headers=headers,
+            )
+            data = data.json()
+            data = data["data"]
+            options = data["list"]
+            if options:
+                for option in options:
+                    for value in option["value_list"]:
+                        options_name.append(value["name"])
+
+        imweb_data = {
+            "products_name": products_name,
+            "options_name": options_name,
+        }
+        return imweb_data
+
+    def get(self, request, pk):
+        brand = self.get_object(pk)
+        imweb_data = self.imweb_api(brand)
+        products_name = []
+        options_name = []
+        products_list = brand.product_set.values("pk", "name")
+        for product in products_list:
+            products_name.append(product["name"])
+            current_product = Product.objects.get(pk=product["pk"])
+            options_list = current_product.options_set.values("name")
+            for option in options_list:
+                options_name.append(option["name"])
+        db_data = {
+            "products_name": products_name,
+            "options_name": options_name,
+        }
+
+        imweb_data_products_set = set(imweb_data["products_name"])
+        imweb_data_options_set = set(imweb_data["options_name"])
+        db_data_products_set = set(db_data["products_name"])
+        db_data_options_set = set(db_data["options_name"])
+        unlisting_products = list(imweb_data_products_set - db_data_products_set)
+        unlisting_options = list(imweb_data_options_set - db_data_options_set)
+        unlisting_data = {
+            "unlisting_products": unlisting_products,
+            "unlisting_options": unlisting_options,
+        }
+        return Response(unlisting_data)
