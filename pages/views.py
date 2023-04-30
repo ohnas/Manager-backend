@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Sum
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -7,6 +8,7 @@ from rest_framework import status
 from brands.models import Brand
 from pages.models import Page
 from pages.serializers import PageSerializer
+from datetime import datetime, timedelta
 
 # Create your views here.
 
@@ -25,9 +27,34 @@ class Pages(APIView):
         brand = self.get_object(brand_pk)
         from_date = request.query_params["dateFrom"]
         to_date = request.query_params["dateTo"]
-        page = brand.page_set.filter(page_date__range=(from_date, to_date))
-        serializer = PageSerializer(page, many=True)
-        return Response(serializer.data)
+
+        sum = brand.page_set.filter(page_date__range=(from_date, to_date)).aggregate(
+            Sum("view")
+        )
+
+        selected_date_from = datetime.strptime(from_date, "%Y-%m-%d")
+        selected_date_to = datetime.strptime(to_date, "%Y-%m-%d")
+        delta = timedelta(days=1)
+        date_list = []
+        while selected_date_from <= selected_date_to:
+            date_list.append(selected_date_from.strftime("%Y-%m-%d"))
+            selected_date_from += delta
+        pages = {
+            "sum": sum["view__sum"],
+        }
+        for date in date_list:
+            try:
+                page = brand.page_set.get(page_date=date)
+                pk = page.pk
+                page_view = page.view
+            except Page.DoesNotExist:
+                pk = "None"
+                page_view = 0
+            pages[date] = {
+                "pk": pk,
+                "view": page_view,
+            }
+        return Response(pages)
 
 
 class CreatePage(APIView):
@@ -46,20 +73,16 @@ class CreatePage(APIView):
         page_date = request.data.get("page_date")
         if not view or not page_date:
             raise ParseError
-        is_page = Page.objects.filter(page_date=page_date, brand=brand)
-        if is_page.exists():
-            raise ParseError("page is already.")
+        serializer = PageSerializer(data=request.data)
+        if serializer.is_valid():
+            with transaction.atomic():
+                page = serializer.save(
+                    brand=brand,
+                )
+                serializer = PageSerializer(page)
+                return Response(serializer.data)
         else:
-            serializer = PageSerializer(data=request.data)
-            if serializer.is_valid():
-                with transaction.atomic():
-                    page = serializer.save(
-                        brand=brand,
-                    )
-                    serializer = PageSerializer(page)
-                    return Response(serializer.data)
-            else:
-                return Response(serializer.errors)
+            return Response(serializer.errors)
 
 
 class UpdatePage(APIView):
@@ -77,7 +100,13 @@ class UpdatePage(APIView):
         serializer = PageSerializer(page)
         return Response(serializer.data)
 
-    def delete(self, request, pk):
+    def put(self, request, pk):
         page = self.get_object(pk)
-        page.delete()
-        return Response(status=status.HTTP_200_OK)
+        serializer = PageSerializer(page, data=request.data, partial=True)
+        if serializer.is_valid():
+            with transaction.atomic():
+                page = serializer.save()
+                serializer = PageSerializer(page)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)

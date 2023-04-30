@@ -10,7 +10,7 @@ class Site(CommonModel):
         ADVERTISING = ("advertising_site", "Advertising")
 
     name = models.CharField(max_length=150)
-    url = models.URLField()
+    url = models.URLField(null=True, blank=True)
     brand = models.ForeignKey(to="brands.Brand", on_delete=models.CASCADE)
     api_key = models.CharField(max_length=150, null=True, blank=True)
     secret_key = models.CharField(max_length=150, null=True, blank=True)

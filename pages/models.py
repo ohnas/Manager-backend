@@ -8,7 +8,7 @@ class Page(CommonModel):
 
     view = models.PositiveIntegerField()
     brand = models.ForeignKey(to="brands.Brand", on_delete=models.CASCADE)
-    page_date = models.DateField()
+    page_date = models.DateField(unique_for_date="page_date")
 
     def __str__(self):
         return f"{self.page_date}"
