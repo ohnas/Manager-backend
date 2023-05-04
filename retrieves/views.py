@@ -36,6 +36,21 @@ class Retrieves(APIView):
         access_token = access_token["access_token"]
         headers = {"access-token": access_token, "version": "latest"}
 
+        imweb_nomal_data = requests.get(
+            f"https://api.imweb.me/v2/shop/orders?order_date_from={order_date_from}&order_date_to={order_date_to}&type=normal",
+            headers=headers,
+        )
+        imweb_nomal_data = imweb_nomal_data.json()
+        imweb_nomal_order_counter = imweb_nomal_data["data"]["pagenation"]["data_count"]
+        time.sleep(0.5)
+        imweb_npay_data = requests.get(
+            f"https://api.imweb.me/v2/shop/orders?order_date_from={order_date_from}&order_date_to={order_date_to}&type=npay",
+            headers=headers,
+        )
+        imweb_npay_data = imweb_npay_data.json()
+        imweb_npay_order_counter = imweb_npay_data["data"]["pagenation"]["data_count"]
+        time.sleep(0.5)
+
         data = requests.get(
             f"https://api.imweb.me/v2/shop/orders?order_date_from={order_date_from}&order_date_to={order_date_to}",
             headers=headers,
@@ -147,10 +162,19 @@ class Retrieves(APIView):
                     or order["imweb_status"] == "COMPLETE"
                 ):
                     modified_order_list.append(order)
+            imweb_data = {
+                "imweb_nomal_order_counter": imweb_nomal_order_counter,
+                "imweb_npay_order_counter": imweb_npay_order_counter,
+                "modified_order_list": modified_order_list,
+            }
         else:
-            modified_order_list = []
+            imweb_data = {
+                "imweb_nomal_order_counter": imweb_nomal_order_counter,
+                "imweb_npay_order_counter": imweb_npay_order_counter,
+                "modified_order_list": modified_order_list,
+            }
 
-        return modified_order_list
+        return imweb_data
 
     def facebook_api(self, advertising_site, date_list):
         app_id = settings.FACEBOOK_APP_ID
@@ -340,6 +364,9 @@ class Retrieves(APIView):
             selected_date_from += delta
 
         imweb_data = self.imweb_api(sale_site, from_date, to_date)
+        imweb_nomal_order_counter = int(imweb_data["imweb_nomal_order_counter"])
+        imweb_npay_order_counter = int(imweb_data["imweb_npay_order_counter"])
+        imweb_data = imweb_data["modified_order_list"]
         facebook_data = self.facebook_api(advertising_site, date_list)
         exchange_rate_data = self.exchange_rate_api(date_list)
 
@@ -1571,6 +1598,8 @@ class Retrieves(APIView):
         total_sum = total_sum.to_dict()
         data["total"] = total
         data["sum"] = total_sum
+        data["imweb_nomal_order_counter"] = imweb_nomal_order_counter
+        data["imweb_npay_order_counter"] = imweb_npay_order_counter
         data["facebook_data"] = facebook_data
 
         return Response(data)
