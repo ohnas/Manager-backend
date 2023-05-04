@@ -17,7 +17,6 @@ import numpy as np
 
 
 class Retrieves(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def imweb_api(self, sale_site, from_date, to_date):
@@ -156,7 +155,7 @@ class Retrieves(APIView):
         app_id = settings.FACEBOOK_APP_ID
         app_secret = settings.FACEBOOK_APP_SECRET
         access_token = settings.FACEBOOK_ACCESS_TOKEN
-        FacebookAdsApi.init(access_token)
+        FacebookAdsApi.init(access_token=access_token)
         insight_fields = [
             AdsInsights.Field.campaign_id,  # 캠페인 아이디
             AdsInsights.Field.campaign_name,  # 캠페인 이름
@@ -1430,7 +1429,6 @@ class Retrieves(APIView):
 
 
 class Unlistings(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
