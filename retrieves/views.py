@@ -19,7 +19,7 @@ import numpy as np
 class Retrieves(APIView):
     permission_classes = [IsAuthenticated]
 
-    def imweb_api(self, sale_site, from_date, to_date):
+    def imweb_api(self, sale_site, from_date, to_date, date_list):
         order_date_from = from_date + " 00:00:00"
         order_date_from = datetime.strptime(order_date_from, "%Y-%m-%d %H:%M:%S")
         order_date_from = round(order_date_from.timestamp())
@@ -36,21 +36,38 @@ class Retrieves(APIView):
         access_token = access_token["access_token"]
         headers = {"access-token": access_token, "version": "latest"}
 
-        imweb_nomal_data = requests.get(
-            f"https://api.imweb.me/v2/shop/orders?order_date_from={order_date_from}&order_date_to={order_date_to}&type=normal",
-            headers=headers,
-        )
-        imweb_nomal_data = imweb_nomal_data.json()
-        imweb_nomal_order_counter = imweb_nomal_data["data"]["pagenation"]["data_count"]
-        time.sleep(0.5)
-        imweb_npay_data = requests.get(
-            f"https://api.imweb.me/v2/shop/orders?order_date_from={order_date_from}&order_date_to={order_date_to}&type=npay",
-            headers=headers,
-        )
-        imweb_npay_data = imweb_npay_data.json()
-        imweb_npay_order_counter = imweb_npay_data["data"]["pagenation"]["data_count"]
-        time.sleep(0.5)
+        imweb_nomal_order_counter = {}
+        imweb_npay_order_counter = {}
+        for date in date_list:
+            time.sleep(1)
+            date_from = date + " 00:00:00"
+            date_from = datetime.strptime(date_from, "%Y-%m-%d %H:%M:%S")
+            date_from = round(date_from.timestamp())
+            date_to = date + " 23:59:59"
+            date_to = datetime.strptime(date_to, "%Y-%m-%d %H:%M:%S")
+            date_to = round(date_to.timestamp())
+            imweb_nomal_data = requests.get(
+                f"https://api.imweb.me/v2/shop/orders?order_date_from={date_from}&order_date_to={date_to}&type=normal",
+                headers=headers,
+            )
+            imweb_nomal_data = imweb_nomal_data.json()
+            imweb_nomal_data = imweb_nomal_data["data"]["pagenation"]["data_count"]
+            imweb_nomal_order_counter[date] = int(imweb_nomal_data)
+            time.sleep(1)
+            imweb_npay_data = requests.get(
+                f"https://api.imweb.me/v2/shop/orders?order_date_from={date_from}&order_date_to={date_to}&type=npay",
+                headers=headers,
+            )
+            imweb_npay_data = imweb_npay_data.json()
+            imweb_npay_data = imweb_npay_data["data"]["pagenation"]["data_count"]
+            imweb_npay_order_counter[date] = int(imweb_npay_data)
 
+        imweb_nomal_order_counter_sum = sum(imweb_nomal_order_counter.values())
+        imweb_nomal_order_counter["sum"] = imweb_nomal_order_counter_sum
+        imweb_npay_order_counter_sum = sum(imweb_npay_order_counter.values())
+        imweb_npay_order_counter["sum"] = imweb_npay_order_counter_sum
+
+        time.sleep(1)
         data = requests.get(
             f"https://api.imweb.me/v2/shop/orders?order_date_from={order_date_from}&order_date_to={order_date_to}",
             headers=headers,
@@ -363,9 +380,9 @@ class Retrieves(APIView):
             date_list.append(selected_date_from.strftime("%Y-%m-%d"))
             selected_date_from += delta
 
-        imweb_data = self.imweb_api(sale_site, from_date, to_date)
-        imweb_nomal_order_counter = int(imweb_data["imweb_nomal_order_counter"])
-        imweb_npay_order_counter = int(imweb_data["imweb_npay_order_counter"])
+        imweb_data = self.imweb_api(sale_site, from_date, to_date, date_list)
+        imweb_nomal_order_counter = imweb_data["imweb_nomal_order_counter"]
+        imweb_npay_order_counter = imweb_data["imweb_npay_order_counter"]
         imweb_data = imweb_data["modified_order_list"]
         facebook_data = self.facebook_api(advertising_site, date_list)
         exchange_rate_data = self.exchange_rate_api(date_list)
