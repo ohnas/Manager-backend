@@ -19,7 +19,7 @@ import numpy as np
 class Retrieves(APIView):
     permission_classes = [IsAuthenticated]
 
-    def imweb_api(self, sale_site, from_date, to_date):
+    def imweb_api(self, sale_site, from_date, to_date, date_list):
         order_date_from = from_date + " 00:00:00"
         order_date_from = datetime.strptime(order_date_from, "%Y-%m-%d %H:%M:%S")
         order_date_from = round(order_date_from.timestamp())
@@ -36,6 +36,38 @@ class Retrieves(APIView):
         access_token = access_token["access_token"]
         headers = {"access-token": access_token, "version": "latest"}
 
+        imweb_nomal_order_counter = {}
+        imweb_npay_order_counter = {}
+        for date in date_list:
+            time.sleep(1)
+            date_from = date + " 00:00:00"
+            date_from = datetime.strptime(date_from, "%Y-%m-%d %H:%M:%S")
+            date_from = round(date_from.timestamp())
+            date_to = date + " 23:59:59"
+            date_to = datetime.strptime(date_to, "%Y-%m-%d %H:%M:%S")
+            date_to = round(date_to.timestamp())
+            imweb_nomal_data = requests.get(
+                f"https://api.imweb.me/v2/shop/orders?order_date_from={date_from}&order_date_to={date_to}&type=normal",
+                headers=headers,
+            )
+            imweb_nomal_data = imweb_nomal_data.json()
+            imweb_nomal_data = imweb_nomal_data["data"]["pagenation"]["data_count"]
+            imweb_nomal_order_counter[date] = int(imweb_nomal_data)
+            time.sleep(1)
+            imweb_npay_data = requests.get(
+                f"https://api.imweb.me/v2/shop/orders?order_date_from={date_from}&order_date_to={date_to}&type=npay",
+                headers=headers,
+            )
+            imweb_npay_data = imweb_npay_data.json()
+            imweb_npay_data = imweb_npay_data["data"]["pagenation"]["data_count"]
+            imweb_npay_order_counter[date] = int(imweb_npay_data)
+
+        imweb_nomal_order_counter_sum = sum(imweb_nomal_order_counter.values())
+        imweb_nomal_order_counter["sum"] = imweb_nomal_order_counter_sum
+        imweb_npay_order_counter_sum = sum(imweb_npay_order_counter.values())
+        imweb_npay_order_counter["sum"] = imweb_npay_order_counter_sum
+
+        time.sleep(1)
         data = requests.get(
             f"https://api.imweb.me/v2/shop/orders?order_date_from={order_date_from}&order_date_to={order_date_to}",
             headers=headers,
@@ -147,9 +179,19 @@ class Retrieves(APIView):
                     or order["imweb_status"] == "COMPLETE"
                 ):
                     modified_order_list.append(order)
+            imweb_data = {
+                "imweb_nomal_order_counter": imweb_nomal_order_counter,
+                "imweb_npay_order_counter": imweb_npay_order_counter,
+                "modified_order_list": modified_order_list,
+            }
         else:
-            modified_order_list = []
-        return modified_order_list
+            imweb_data = {
+                "imweb_nomal_order_counter": imweb_nomal_order_counter,
+                "imweb_npay_order_counter": imweb_npay_order_counter,
+                "modified_order_list": modified_order_list,
+            }
+
+        return imweb_data
 
     def facebook_api(self, advertising_site, date_list):
         app_id = settings.FACEBOOK_APP_ID
@@ -168,11 +210,16 @@ class Retrieves(APIView):
             AdsInsights.Field.purchase_roas,  # 구매 roas- 일치확인완료
             AdsInsights.Field.cost_per_unique_inline_link_click,  # CPC(링크 클릭당 비용)-일치확인완료
             AdsInsights.Field.actions,
+            AdsInsights.Field.action_values,
             # 구매항목은 actions 항목 중 "action_type":"purchase"의 value 값
             # 랜딩 페이지 조회 항목은 actions 항목 중 "action_type":"landing_page_view"의 value 값
             # 링크 클릭 항목은 actions 항목 중 "action_type":"link_click" 의 value 값
             # 결제정보추가 항목은 actions 항목 중 "action_type":"add_payment_info" 의 value 값
             # 장바구니 항목은 actions 항목 중 "action_type":"add_to_cart" 의 value 값
+            # 결제시작 항목은 actions 항목 중 "action_type":"initiate_checkout" 의 value 값
+            # 구매전환값 항목은 action_values 항목 중 "action_type":"offsite_conversion.fb_pixel_purchase" 의 value 값
+            # 결제시작 전환값 항목은 action_values 항목 중 "action_type":"offsite_conversion.fb_pixel_initiate_checkout" 의 value 값
+            # 장바구니추가 전환값 항목은 action_values 항목 중 "action_type":"offsite_conversion.fb_pixel_add_to_cart" 의 value 값
             AdsInsights.Field.adset_name,  # 광고세트 이름
         ]
         site = Site.objects.get(pk=advertising_site)
@@ -196,30 +243,76 @@ class Retrieves(APIView):
                     purchase_roas = 0
                 else:
                     purchase_roas = insight["purchase_roas"][0]["value"]
-                actions = insight["actions"]
-                purchase = 0
-                landing_page_view = 0
-                link_click = 0
-                add_payment_info = 0
-                add_to_cart = 0
-                for action in actions:
-                    if action["action_type"] == "purchase":
-                        index_no = actions.index(action)
-                        purchase = actions[index_no]["value"]
-                    if action["action_type"] == "landing_page_view":
-                        index_no = actions.index(action)
-                        landing_page_view = actions[index_no]["value"]
-                    if action["action_type"] == "link_click":
-                        index_no = actions.index(action)
-                        link_click = actions[index_no]["value"]
-                    if action["action_type"] == "add_payment_info":
-                        index_no = actions.index(action)
-                        add_payment_info = actions[index_no]["value"]
-                    if action["action_type"] == "add_to_cart":
-                        index_no = actions.index(action)
-                        add_to_cart = actions[index_no]["value"]
-                    # dict 을 가져올때 get을 이용하자. 이유는 가져오려는 항목의 수치가 없을경우 facebook에서는 그 항목을 응답하지 않기 때문에
-                    # get을 이용해서 항목의 value를 가져오고 없을경우 0을 defalut로 보여주자
+                if "actions" in insight:
+                    actions = insight["actions"]
+                    purchase = 0
+                    landing_page_view = 0
+                    link_click = 0
+                    add_payment_info = 0
+                    add_to_cart = 0
+                    initiate_checkout = 0
+                    for action in actions:
+                        if action["action_type"] == "purchase":
+                            index_no = actions.index(action)
+                            purchase = actions[index_no]["value"]
+                        elif action["action_type"] == "landing_page_view":
+                            index_no = actions.index(action)
+                            landing_page_view = actions[index_no]["value"]
+                        elif action["action_type"] == "link_click":
+                            index_no = actions.index(action)
+                            link_click = actions[index_no]["value"]
+                        elif action["action_type"] == "add_payment_info":
+                            index_no = actions.index(action)
+                            add_payment_info = actions[index_no]["value"]
+                        elif action["action_type"] == "add_to_cart":
+                            index_no = actions.index(action)
+                            add_to_cart = actions[index_no]["value"]
+                        elif action["action_type"] == "initiate_checkout":
+                            index_no = actions.index(action)
+                            initiate_checkout = actions[index_no]["value"]
+                else:
+                    purchase = 0
+                    landing_page_view = 0
+                    link_click = 0
+                    add_payment_info = 0
+                    add_to_cart = 0
+                    initiate_checkout = 0
+                if "action_values" in insight:
+                    action_values = insight["action_values"]
+                    offsite_conversion_fb_pixel_purchase = 0
+                    offsite_conversion_fb_pixel_initiate_checkout = 0
+                    offsite_conversion_fb_pixel_add_to_cart = 0
+                    for value in action_values:
+                        if (
+                            value["action_type"]
+                            == "offsite_conversion.fb_pixel_add_to_cart"
+                        ):
+                            index_no = action_values.index(value)
+                            offsite_conversion_fb_pixel_purchase = action_values[
+                                index_no
+                            ]["value"]
+                        elif (
+                            value["action_type"]
+                            == "offsite_conversion.fb_pixel_initiate_checkout"
+                        ):
+                            index_no = action_values.index(value)
+                            offsite_conversion_fb_pixel_initiate_checkout = (
+                                action_values[index_no]["value"]
+                            )
+                        elif (
+                            value["action_type"]
+                            == "offsite_conversion.fb_pixel_add_to_cart"
+                        ):
+                            index_no = action_values.index(value)
+                            offsite_conversion_fb_pixel_add_to_cart = action_values[
+                                index_no
+                            ]["value"]
+                else:
+                    offsite_conversion_fb_pixel_purchase = 0
+                    offsite_conversion_fb_pixel_initiate_checkout = 0
+                    offsite_conversion_fb_pixel_add_to_cart = 0
+                # dict 을 가져올때 get을 이용하자. 이유는 가져오려는 항목의 수치가 없을경우 facebook에서는 그 항목을 응답하지 않기 때문에
+                # get을 이용해서 항목의 value를 가져오고 없을경우 0을 defalut로 보여주자
                 advertisings = {
                     "campaign_id": insight.get("campaign_id", 0),
                     "campaign_name": insight.get("campaign_name", 0),
@@ -240,6 +333,16 @@ class Retrieves(APIView):
                     "link_click": int(link_click),
                     "add_payment_info": int(add_payment_info),
                     "add_to_cart": int(add_to_cart),
+                    "initiate_checkout": int(initiate_checkout),
+                    "offsite_conversion_fb_pixel_purchase": float(
+                        offsite_conversion_fb_pixel_purchase
+                    ),
+                    "offsite_conversion_fb_pixel_initiate_checkout": float(
+                        offsite_conversion_fb_pixel_initiate_checkout
+                    ),
+                    "offsite_conversion_fb_pixel_add_to_cart": float(
+                        offsite_conversion_fb_pixel_add_to_cart
+                    ),
                 }
                 advertisings_list.append(advertisings)
 
@@ -277,7 +380,10 @@ class Retrieves(APIView):
             date_list.append(selected_date_from.strftime("%Y-%m-%d"))
             selected_date_from += delta
 
-        imweb_data = self.imweb_api(sale_site, from_date, to_date)
+        imweb_data = self.imweb_api(sale_site, from_date, to_date, date_list)
+        imweb_nomal_order_counter = imweb_data["imweb_nomal_order_counter"]
+        imweb_npay_order_counter = imweb_data["imweb_npay_order_counter"]
+        imweb_data = imweb_data["modified_order_list"]
         facebook_data = self.facebook_api(advertising_site, date_list)
         exchange_rate_data = self.exchange_rate_api(date_list)
 
@@ -342,6 +448,11 @@ class Retrieves(APIView):
                     "add_payment_info": 0,
                     "add_to_cart": 0,
                     "conversion_rate": 0.0,
+                    "initiate_checkout": 0,
+                    "offsite_conversion_fb_pixel_purchase": 0.0,
+                    "offsite_conversion_fb_pixel_initiate_checkout": 0.0,
+                    "offsite_conversion_fb_pixel_add_to_cart": 0.0,
+                    "initiate_checkout_rate": 0.0,
                 }
             )
             for product in products:
@@ -397,6 +508,11 @@ class Retrieves(APIView):
                         "add_payment_info": 0,
                         "add_to_cart": 0,
                         "conversion_rate": 0.0,
+                        "initiate_checkout": 0,
+                        "offsite_conversion_fb_pixel_purchase": 0.0,
+                        "offsite_conversion_fb_pixel_initiate_checkout": 0.0,
+                        "offsite_conversion_fb_pixel_add_to_cart": 0.0,
+                        "initiate_checkout_rate": 0.0,
                     }
                 )
                 facebook_campaign_df = facebook_campaign_df.merge(
@@ -556,6 +672,11 @@ class Retrieves(APIView):
                     "add_payment_info": 0,
                     "add_to_cart": 0,
                     "conversion_rate": 0.0,
+                    "initiate_checkout": 0,
+                    "offsite_conversion_fb_pixel_purchase": 0.0,
+                    "offsite_conversion_fb_pixel_initiate_checkout": 0.0,
+                    "offsite_conversion_fb_pixel_add_to_cart": 0.0,
+                    "initiate_checkout_rate": 0.0,
                 }
             )
             for product in products:
@@ -710,6 +831,11 @@ class Retrieves(APIView):
                         "add_payment_info": 0,
                         "add_to_cart": 0,
                         "conversion_rate": 0.0,
+                        "initiate_checkout": 0,
+                        "offsite_conversion_fb_pixel_purchase": 0.0,
+                        "offsite_conversion_fb_pixel_initiate_checkout": 0.0,
+                        "offsite_conversion_fb_pixel_add_to_cart": 0.0,
+                        "initiate_checkout_rate": 0.0,
                     }
                 )
                 facebook_campaign_df = facebook_campaign_df.merge(
@@ -803,6 +929,10 @@ class Retrieves(APIView):
                     "link_click": "sum",
                     "add_payment_info": "sum",
                     "add_to_cart": "sum",
+                    "initiate_checkout": "sum",
+                    "offsite_conversion_fb_pixel_purchase": "sum",
+                    "offsite_conversion_fb_pixel_initiate_checkout": "sum",
+                    "offsite_conversion_fb_pixel_add_to_cart": "sum",
                 }
             )
             facebook_total_df["conversion_rate"] = (
@@ -810,6 +940,13 @@ class Retrieves(APIView):
             ) * 100
             facebook_total_df["conversion_rate"] = facebook_total_df[
                 "conversion_rate"
+            ].fillna(0.0)
+            facebook_total_df["initiate_checkout_rate"] = (
+                facebook_total_df["initiate_checkout"]
+                / facebook_total_df["landing_page_view"]
+            ) * 100
+            facebook_total_df["initiate_checkout_rate"] = facebook_total_df[
+                "initiate_checkout_rate"
             ].fillna(0.0)
             for d in date_list:
                 if facebook_total_df[facebook_total_df["date"] == d].empty:
@@ -831,6 +968,11 @@ class Retrieves(APIView):
                                 "add_payment_info": 0,
                                 "add_to_cart": 0,
                                 "conversion_rate": 0.0,
+                                "initiate_checkout": 0,
+                                "offsite_conversion_fb_pixel_purchase": 0.0,
+                                "offsite_conversion_fb_pixel_initiate_checkout": 0.0,
+                                "offsite_conversion_fb_pixel_add_to_cart": 0.0,
+                                "initiate_checkout_rate": 0.0,
                             }
                         ]
                     )
@@ -894,6 +1036,10 @@ class Retrieves(APIView):
                         "link_click": "sum",
                         "add_payment_info": "sum",
                         "add_to_cart": "sum",
+                        "initiate_checkout": "sum",
+                        "offsite_conversion_fb_pixel_purchase": "sum",
+                        "offsite_conversion_fb_pixel_initiate_checkout": "sum",
+                        "offsite_conversion_fb_pixel_add_to_cart": "sum",
                     }
                 )
                 facebook_campaign_df["conversion_rate"] = (
@@ -902,6 +1048,13 @@ class Retrieves(APIView):
                 ) * 100
                 facebook_campaign_df["conversion_rate"] = facebook_campaign_df[
                     "conversion_rate"
+                ].fillna(0.0)
+                facebook_campaign_df["initiate_checkout_rate"] = (
+                    facebook_campaign_df["initiate_checkout"]
+                    / facebook_campaign_df["landing_page_view"]
+                ) * 100
+                facebook_campaign_df["initiate_checkout_rate"] = facebook_campaign_df[
+                    "initiate_checkout_rate"
                 ].fillna(0.0)
                 for d in date_list:
                     if facebook_campaign_df[facebook_campaign_df["date"] == d].empty:
@@ -923,6 +1076,11 @@ class Retrieves(APIView):
                                     "add_payment_info": 0,
                                     "add_to_cart": 0,
                                     "conversion_rate": 0.0,
+                                    "initiate_checkout": 0,
+                                    "offsite_conversion_fb_pixel_purchase": 0.0,
+                                    "offsite_conversion_fb_pixel_initiate_checkout": 0.0,
+                                    "offsite_conversion_fb_pixel_add_to_cart": 0.0,
+                                    "initiate_checkout_rate": 0.0,
                                 }
                             ]
                         )
@@ -1085,6 +1243,10 @@ class Retrieves(APIView):
                     "link_click": "sum",
                     "add_payment_info": "sum",
                     "add_to_cart": "sum",
+                    "initiate_checkout": "sum",
+                    "offsite_conversion_fb_pixel_purchase": "sum",
+                    "offsite_conversion_fb_pixel_initiate_checkout": "sum",
+                    "offsite_conversion_fb_pixel_add_to_cart": "sum",
                 }
             )
             facebook_total_df["conversion_rate"] = (
@@ -1092,6 +1254,13 @@ class Retrieves(APIView):
             ) * 100
             facebook_total_df["conversion_rate"] = facebook_total_df[
                 "conversion_rate"
+            ].fillna(0.0)
+            facebook_total_df["initiate_checkout_rate"] = (
+                facebook_total_df["initiate_checkout"]
+                / facebook_total_df["landing_page_view"]
+            ) * 100
+            facebook_total_df["initiate_checkout_rate"] = facebook_total_df[
+                "initiate_checkout_rate"
             ].fillna(0.0)
             for d in date_list:
                 if facebook_total_df[facebook_total_df["date"] == d].empty:
@@ -1113,6 +1282,11 @@ class Retrieves(APIView):
                                 "add_payment_info": 0,
                                 "add_to_cart": 0,
                                 "conversion_rate": 0.0,
+                                "initiate_checkout": 0,
+                                "offsite_conversion_fb_pixel_purchase": 0.0,
+                                "offsite_conversion_fb_pixel_initiate_checkout": 0.0,
+                                "offsite_conversion_fb_pixel_add_to_cart": 0.0,
+                                "initiate_checkout_rate": 0.0,
                             }
                         ]
                     )
@@ -1276,6 +1450,10 @@ class Retrieves(APIView):
                         "link_click": "sum",
                         "add_payment_info": "sum",
                         "add_to_cart": "sum",
+                        "initiate_checkout": "sum",
+                        "offsite_conversion_fb_pixel_purchase": "sum",
+                        "offsite_conversion_fb_pixel_initiate_checkout": "sum",
+                        "offsite_conversion_fb_pixel_add_to_cart": "sum",
                     }
                 )
                 facebook_campaign_df["conversion_rate"] = (
@@ -1284,6 +1462,13 @@ class Retrieves(APIView):
                 ) * 100
                 facebook_campaign_df["conversion_rate"] = facebook_campaign_df[
                     "conversion_rate"
+                ].fillna(0.0)
+                facebook_campaign_df["initiate_checkout_rate"] = (
+                    facebook_campaign_df["initiate_checkout"]
+                    / facebook_campaign_df["landing_page_view"]
+                ) * 100
+                facebook_campaign_df["initiate_checkout_rate"] = facebook_campaign_df[
+                    "initiate_checkout_rate"
                 ].fillna(0.0)
                 for d in date_list:
                     if facebook_campaign_df[facebook_campaign_df["date"] == d].empty:
@@ -1305,6 +1490,11 @@ class Retrieves(APIView):
                                     "add_payment_info": 0,
                                     "add_to_cart": 0,
                                     "conversion_rate": 0.0,
+                                    "initiate_checkout": 0,
+                                    "offsite_conversion_fb_pixel_purchase": 0.0,
+                                    "offsite_conversion_fb_pixel_initiate_checkout": 0.0,
+                                    "offsite_conversion_fb_pixel_add_to_cart": 0.0,
+                                    "initiate_checkout_rate": 0.0,
                                 }
                             ]
                         )
@@ -1414,6 +1604,7 @@ class Retrieves(APIView):
                 "purchase_roas",
                 "conversion_rate",
                 "krw",
+                "initiate_checkout_rate",
                 "operating_profit_rate",
                 "product_cost_rate",
                 "facebook_ad_expense_krw_rate",
@@ -1424,6 +1615,9 @@ class Retrieves(APIView):
         total_sum = total_sum.to_dict()
         data["total"] = total
         data["sum"] = total_sum
+        data["imweb_nomal_order_counter"] = imweb_nomal_order_counter
+        data["imweb_npay_order_counter"] = imweb_npay_order_counter
+        data["facebook_data"] = facebook_data
 
         return Response(data)
 
