@@ -1600,10 +1600,15 @@ class Retrieves(APIView):
         total = total_df.to_dict("index")
         total_sum_df = total_df.drop(
             [
+                "frequency",
+                "cpm",
                 "website_ctr",
                 "purchase_roas",
+                "cost_per_unique_inline_link_click",
+                "offsite_conversion_fb_pixel_add_to_cart",
                 "conversion_rate",
-                "krw",
+                "offsite_conversion_fb_pixel_purchase",
+                "offsite_conversion_fb_pixel_initiate_checkout",
                 "initiate_checkout_rate",
                 "operating_profit_rate",
                 "product_cost_rate",
@@ -1611,10 +1616,30 @@ class Retrieves(APIView):
             ],
             axis=1,
         )
+        total_mean_df = total_df[
+            [
+                "frequency",
+                "cpm",
+                "website_ctr",
+                "purchase_roas",
+                "cost_per_unique_inline_link_click",
+                "offsite_conversion_fb_pixel_add_to_cart",
+                "conversion_rate",
+                "offsite_conversion_fb_pixel_purchase",
+                "offsite_conversion_fb_pixel_initiate_checkout",
+                "initiate_checkout_rate",
+                "operating_profit_rate",
+                "product_cost_rate",
+                "facebook_ad_expense_krw_rate",
+            ]
+        ]
         total_sum = total_sum_df.sum(axis=0)
         total_sum = total_sum.to_dict()
+        total_mean = total_mean_df.mean(axis=0)
+        total_mean = total_mean.to_dict()
         data["total"] = total
         data["sum"] = total_sum
+        data["mean"] = total_mean
         data["imweb_nomal_order_counter"] = imweb_nomal_order_counter
         data["imweb_npay_order_counter"] = imweb_npay_order_counter
         data["facebook_data"] = facebook_data
