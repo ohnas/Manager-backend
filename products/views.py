@@ -102,9 +102,16 @@ class UpdateProduct(APIView):
 class Option(APIView):
     permission_classes = [IsAdminUser]
 
-    def get(self, request):
-        all_options = Options.objects.all()
-        serializer = OptionsSerializer(all_options, many=True)
+    def get_object(self, product_pk):
+        try:
+            return Product.objects.get(pk=product_pk)
+        except Product.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, product_pk):
+        product = self.get_object(product_pk)
+        options = product.options_set.all()
+        serializer = OptionsSerializer(options, many=True)
         return Response(serializer.data)
 
 
