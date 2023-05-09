@@ -15,17 +15,22 @@ from brands.models import Brand
 
 
 class Products(APIView):
-
     permission_classes = [IsAdminUser]
 
-    def get(self, request):
-        all_products = Product.objects.all()
-        serializer = ProductSerializer(all_products, many=True)
+    def get_object(self, brand_pk):
+        try:
+            return Brand.objects.get(pk=brand_pk)
+        except Brand.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, brand_pk):
+        brand = self.get_object(brand_pk)
+        products = brand.product_set.all()
+        serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 
 
 class CreateProduct(APIView):
-
     permission_classes = [IsAdminUser]
 
     def get(self, request):
@@ -53,7 +58,6 @@ class CreateProduct(APIView):
 
 
 class UpdateProduct(APIView):
-
     permission_classes = [IsAdminUser]
 
     def get_object(self, pk):
@@ -96,7 +100,6 @@ class UpdateProduct(APIView):
 
 
 class Option(APIView):
-
     permission_classes = [IsAdminUser]
 
     def get(self, request):
@@ -106,7 +109,6 @@ class Option(APIView):
 
 
 class CreateOption(APIView):
-
     permission_classes = [IsAdminUser]
 
     def get(self, request):
@@ -142,7 +144,6 @@ class CreateOption(APIView):
 
 
 class UpdateOption(APIView):
-
     permission_classes = [IsAdminUser]
 
     def get_object(self, pk):
