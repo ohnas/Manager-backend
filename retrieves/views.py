@@ -346,29 +346,40 @@ class Retrieves(APIView):
                 }
                 advertisings_list.append(advertisings)
         for advertising in advertisings_list:
-            advertising["sum_roas"] = (
-                (
-                    advertising["offsite_conversion_fb_pixel_purchase"]
-                    + advertising["offsite_conversion_fb_pixel_initiate_checkout"]
-                )
-                / advertising["spend"]
-            ) * 100
+            try:
+                advertising["sum_roas"] = (
+                    (
+                        advertising["offsite_conversion_fb_pixel_purchase"]
+                        + advertising["offsite_conversion_fb_pixel_initiate_checkout"]
+                    )
+                    / advertising["spend"]
+                ) * 100
+            except ZeroDivisionError:
+                advertising["sum_roas"] = 0.0
 
         return advertisings_list
 
     def exchange_rate_api(self, date_list):
         exchange_rate_list = []
         for date in date_list:
-            exchange_rate = requests.get(
-                f"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/{date}/currencies/usd/krw.json"
-            )
-            exchange_rate = exchange_rate.json()
-            exchange_rate_list.append(
-                {
-                    "date": date,
-                    "krw": round(exchange_rate["krw"], 2),
-                }
-            )
+            if date == "2023-05-05":
+                exchange_rate_list.append(
+                    {
+                        "date": date,
+                        "krw": 1329.45,
+                    }
+                )
+            else:
+                exchange_rate = requests.get(
+                    f"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/{date}/currencies/usd/krw.json"
+                )
+                exchange_rate = exchange_rate.json()
+                exchange_rate_list.append(
+                    {
+                        "date": date,
+                        "krw": round(exchange_rate["krw"], 2),
+                    }
+                )
         return exchange_rate_list
 
     def get(self, request):
