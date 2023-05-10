@@ -36,13 +36,12 @@ class CreateSite(APIView):
 
     def post(self, request):
         name = request.data.get("name")
-        url = request.data.get("url")
         brand = request.data.get("brand")
         api_key = request.data.get("apiKey")
         secret_key = request.data.get("secretKey")
         ad_account_id = request.data.get("adAccountId")
         kind = request.data.get("kind")
-        if not name or not url or not brand or not kind:
+        if not name or not brand or not kind:
             raise ParseError
         brand = Brand.objects.get(pk=brand)
         serializer = SiteSerializer(data=request.data)
