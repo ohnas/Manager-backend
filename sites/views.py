@@ -13,9 +13,16 @@ from sites.serializers import SiteSerializer
 class Sites(APIView):
     permission_classes = [IsAdminUser]
 
-    def get(self, request):
-        all_site = Site.objects.all()
-        serializer = SiteSerializer(all_site, many=True)
+    def get_object(self, brand_pk):
+        try:
+            return Brand.objects.get(pk=brand_pk)
+        except Brand.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, brand_pk):
+        brand = self.get_object(brand_pk)
+        sites = brand.site_set.all()
+        serializer = SiteSerializer(sites, many=True)
         return Response(serializer.data)
 
 

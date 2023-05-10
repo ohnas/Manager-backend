@@ -345,22 +345,41 @@ class Retrieves(APIView):
                     ),
                 }
                 advertisings_list.append(advertisings)
+        for advertising in advertisings_list:
+            try:
+                advertising["sum_roas"] = (
+                    (
+                        advertising["offsite_conversion_fb_pixel_purchase"]
+                        + advertising["offsite_conversion_fb_pixel_initiate_checkout"]
+                    )
+                    / advertising["spend"]
+                ) * 100
+            except ZeroDivisionError:
+                advertising["sum_roas"] = 0.0
 
         return advertisings_list
 
     def exchange_rate_api(self, date_list):
         exchange_rate_list = []
         for date in date_list:
-            exchange_rate = requests.get(
-                f"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/{date}/currencies/usd/krw.json"
-            )
-            exchange_rate = exchange_rate.json()
-            exchange_rate_list.append(
-                {
-                    "date": date,
-                    "krw": round(exchange_rate["krw"], 2),
-                }
-            )
+            if date == "2023-05-05":
+                exchange_rate_list.append(
+                    {
+                        "date": date,
+                        "krw": 1329.45,
+                    }
+                )
+            else:
+                exchange_rate = requests.get(
+                    f"https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/{date}/currencies/usd/krw.json"
+                )
+                exchange_rate = exchange_rate.json()
+                exchange_rate_list.append(
+                    {
+                        "date": date,
+                        "krw": round(exchange_rate["krw"], 2),
+                    }
+                )
         return exchange_rate_list
 
     def get(self, request):
@@ -1600,10 +1619,15 @@ class Retrieves(APIView):
         total = total_df.to_dict("index")
         total_sum_df = total_df.drop(
             [
+                "frequency",
+                "cpm",
                 "website_ctr",
                 "purchase_roas",
+                "cost_per_unique_inline_link_click",
+                "offsite_conversion_fb_pixel_add_to_cart",
                 "conversion_rate",
-                "krw",
+                "offsite_conversion_fb_pixel_purchase",
+                "offsite_conversion_fb_pixel_initiate_checkout",
                 "initiate_checkout_rate",
                 "operating_profit_rate",
                 "product_cost_rate",
@@ -1611,10 +1635,30 @@ class Retrieves(APIView):
             ],
             axis=1,
         )
+        total_mean_df = total_df[
+            [
+                "frequency",
+                "cpm",
+                "website_ctr",
+                "purchase_roas",
+                "cost_per_unique_inline_link_click",
+                "offsite_conversion_fb_pixel_add_to_cart",
+                "conversion_rate",
+                "offsite_conversion_fb_pixel_purchase",
+                "offsite_conversion_fb_pixel_initiate_checkout",
+                "initiate_checkout_rate",
+                "operating_profit_rate",
+                "product_cost_rate",
+                "facebook_ad_expense_krw_rate",
+            ]
+        ]
         total_sum = total_sum_df.sum(axis=0)
         total_sum = total_sum.to_dict()
+        total_mean = total_mean_df.mean(axis=0)
+        total_mean = total_mean.to_dict()
         data["total"] = total
         data["sum"] = total_sum
+        data["mean"] = total_mean
         data["imweb_nomal_order_counter"] = imweb_nomal_order_counter
         data["imweb_npay_order_counter"] = imweb_npay_order_counter
         data["facebook_data"] = facebook_data
