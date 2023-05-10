@@ -345,6 +345,14 @@ class Retrieves(APIView):
                     ),
                 }
                 advertisings_list.append(advertisings)
+        for advertising in advertisings_list:
+            advertising["sum_roas"] = (
+                (
+                    advertising["offsite_conversion_fb_pixel_purchase"]
+                    + advertising["offsite_conversion_fb_pixel_initiate_checkout"]
+                )
+                / advertising["spend"]
+            ) * 100
 
         return advertisings_list
 
