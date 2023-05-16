@@ -586,9 +586,51 @@ class Retrieves(APIView):
                 )
                 product_total_df = product_total_df.set_index("date")
                 product_total = product_total_df.to_dict("index")
+                product_total_sum_df = product_total_df.drop(
+                    [
+                        "frequency",
+                        "cpm",
+                        "website_ctr",
+                        "purchase_roas",
+                        "cost_per_unique_inline_link_click",
+                        "offsite_conversion_fb_pixel_add_to_cart",
+                        "conversion_rate",
+                        "offsite_conversion_fb_pixel_purchase",
+                        "offsite_conversion_fb_pixel_initiate_checkout",
+                        "initiate_checkout_rate",
+                        "operating_profit_rate",
+                        "product_cost_rate",
+                        "facebook_ad_expense_krw_rate",
+                    ],
+                    axis=1,
+                )
+                product_total_mean_df = product_total_df[
+                    [
+                        "frequency",
+                        "cpm",
+                        "website_ctr",
+                        "purchase_roas",
+                        "cost_per_unique_inline_link_click",
+                        "offsite_conversion_fb_pixel_add_to_cart",
+                        "conversion_rate",
+                        "offsite_conversion_fb_pixel_purchase",
+                        "offsite_conversion_fb_pixel_initiate_checkout",
+                        "initiate_checkout_rate",
+                        "operating_profit_rate",
+                        "product_cost_rate",
+                        "facebook_ad_expense_krw_rate",
+                    ]
+                ]
+                product_total_sum = product_total_sum_df.sum(axis=0)
+                product_total_sum = product_total_sum.to_dict()
+                product_total_mean = product_total_mean_df.mean(axis=0)
+                product_total_mean = product_total_mean.to_dict()
+
                 data[product["name"]] = {
                     "date": product_total,
                     "options": option_data,
+                    "sum": product_total_sum,
+                    "mean": product_total_mean,
                 }
 
         elif imweb_data and not facebook_data:
@@ -909,9 +951,51 @@ class Retrieves(APIView):
                 )
                 product_total_df = product_total_df.set_index("date")
                 product_total = product_total_df.to_dict("index")
+                product_total_sum_df = product_total_df.drop(
+                    [
+                        "frequency",
+                        "cpm",
+                        "website_ctr",
+                        "purchase_roas",
+                        "cost_per_unique_inline_link_click",
+                        "offsite_conversion_fb_pixel_add_to_cart",
+                        "conversion_rate",
+                        "offsite_conversion_fb_pixel_purchase",
+                        "offsite_conversion_fb_pixel_initiate_checkout",
+                        "initiate_checkout_rate",
+                        "operating_profit_rate",
+                        "product_cost_rate",
+                        "facebook_ad_expense_krw_rate",
+                    ],
+                    axis=1,
+                )
+                product_total_mean_df = product_total_df[
+                    [
+                        "frequency",
+                        "cpm",
+                        "website_ctr",
+                        "purchase_roas",
+                        "cost_per_unique_inline_link_click",
+                        "offsite_conversion_fb_pixel_add_to_cart",
+                        "conversion_rate",
+                        "offsite_conversion_fb_pixel_purchase",
+                        "offsite_conversion_fb_pixel_initiate_checkout",
+                        "initiate_checkout_rate",
+                        "operating_profit_rate",
+                        "product_cost_rate",
+                        "facebook_ad_expense_krw_rate",
+                    ]
+                ]
+                product_total_sum = product_total_sum_df.sum(axis=0)
+                product_total_sum = product_total_sum.to_dict()
+                product_total_mean = product_total_mean_df.mean(axis=0)
+                product_total_mean = product_total_mean.to_dict()
+
                 data[product["name"]] = {
                     "date": product_total,
                     "options": option_data,
+                    "sum": product_total_sum,
+                    "mean": product_total_mean,
                 }
 
         elif not imweb_data and facebook_data:
@@ -1158,9 +1242,51 @@ class Retrieves(APIView):
                 )
                 product_total_df = product_total_df.set_index("date")
                 product_total = product_total_df.to_dict("index")
+                product_total_sum_df = product_total_df.drop(
+                    [
+                        "frequency",
+                        "cpm",
+                        "website_ctr",
+                        "purchase_roas",
+                        "cost_per_unique_inline_link_click",
+                        "offsite_conversion_fb_pixel_add_to_cart",
+                        "conversion_rate",
+                        "offsite_conversion_fb_pixel_purchase",
+                        "offsite_conversion_fb_pixel_initiate_checkout",
+                        "initiate_checkout_rate",
+                        "operating_profit_rate",
+                        "product_cost_rate",
+                        "facebook_ad_expense_krw_rate",
+                    ],
+                    axis=1,
+                )
+                product_total_mean_df = product_total_df[
+                    [
+                        "frequency",
+                        "cpm",
+                        "website_ctr",
+                        "purchase_roas",
+                        "cost_per_unique_inline_link_click",
+                        "offsite_conversion_fb_pixel_add_to_cart",
+                        "conversion_rate",
+                        "offsite_conversion_fb_pixel_purchase",
+                        "offsite_conversion_fb_pixel_initiate_checkout",
+                        "initiate_checkout_rate",
+                        "operating_profit_rate",
+                        "product_cost_rate",
+                        "facebook_ad_expense_krw_rate",
+                    ]
+                ]
+                product_total_sum = product_total_sum_df.sum(axis=0)
+                product_total_sum = product_total_sum.to_dict()
+                product_total_mean = product_total_mean_df.mean(axis=0)
+                product_total_mean = product_total_mean.to_dict()
+
                 data[product["name"]] = {
                     "date": product_total,
                     "options": option_data,
+                    "sum": product_total_sum,
+                    "mean": product_total_mean,
                 }
 
         elif imweb_data and facebook_data:
@@ -1572,9 +1698,51 @@ class Retrieves(APIView):
                 )
                 product_total_df = product_total_df.set_index("date")
                 product_total = product_total_df.to_dict("index")
+                product_total_sum_df = product_total_df.drop(
+                    [
+                        "frequency",
+                        "cpm",
+                        "website_ctr",
+                        "purchase_roas",
+                        "cost_per_unique_inline_link_click",
+                        "offsite_conversion_fb_pixel_add_to_cart",
+                        "conversion_rate",
+                        "offsite_conversion_fb_pixel_purchase",
+                        "offsite_conversion_fb_pixel_initiate_checkout",
+                        "initiate_checkout_rate",
+                        "operating_profit_rate",
+                        "product_cost_rate",
+                        "facebook_ad_expense_krw_rate",
+                    ],
+                    axis=1,
+                )
+                product_total_mean_df = product_total_df[
+                    [
+                        "frequency",
+                        "cpm",
+                        "website_ctr",
+                        "purchase_roas",
+                        "cost_per_unique_inline_link_click",
+                        "offsite_conversion_fb_pixel_add_to_cart",
+                        "conversion_rate",
+                        "offsite_conversion_fb_pixel_purchase",
+                        "offsite_conversion_fb_pixel_initiate_checkout",
+                        "initiate_checkout_rate",
+                        "operating_profit_rate",
+                        "product_cost_rate",
+                        "facebook_ad_expense_krw_rate",
+                    ]
+                ]
+                product_total_sum = product_total_sum_df.sum(axis=0)
+                product_total_sum = product_total_sum.to_dict()
+                product_total_mean = product_total_mean_df.mean(axis=0)
+                product_total_mean = product_total_mean.to_dict()
+
                 data[product["name"]] = {
                     "date": product_total,
                     "options": option_data,
+                    "sum": product_total_sum,
+                    "mean": product_total_mean,
                 }
 
         facebook_total_df = facebook_total_df.merge(exchange_rate_df, on="date")
