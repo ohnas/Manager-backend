@@ -185,6 +185,7 @@ class Retrieves(APIView):
                 "modified_order_list": modified_order_list,
             }
         else:
+            modified_order_list = []
             imweb_data = {
                 "imweb_nomal_order_counter": imweb_nomal_order_counter,
                 "imweb_npay_order_counter": imweb_npay_order_counter,
