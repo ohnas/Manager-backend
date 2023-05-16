@@ -631,6 +631,7 @@ class Retrieves(APIView):
                     "options": option_data,
                     "sum": product_total_sum,
                     "mean": product_total_mean,
+                    "adset": [],
                 }
 
         elif imweb_data and not facebook_data:
@@ -996,6 +997,7 @@ class Retrieves(APIView):
                     "options": option_data,
                     "sum": product_total_sum,
                     "mean": product_total_mean,
+                    "adset": [],
                 }
 
         elif not imweb_data and facebook_data:
@@ -1123,6 +1125,56 @@ class Retrieves(APIView):
                 facebook_campaign_df = facebook_df[
                     facebook_df["campaign_name"] == product["name"]
                 ]
+                adset_name_list = facebook_campaign_df["adset_name"].tolist()
+                adset_name_list = set(adset_name_list)
+                adset_name_list = list(adset_name_list)
+                facebook_adset = []
+                for adset in adset_name_list:
+                    facebook_adset_df = facebook_campaign_df[
+                        facebook_campaign_df["adset_name"] == adset
+                    ]
+                    facebook_adset_sum_df = facebook_adset_df.drop(
+                        [
+                            "campaign_id",
+                            "campaign_name",
+                            "adset_name",
+                            "date",
+                            "frequency",
+                            "cpm",
+                            "website_ctr",
+                            "purchase_roas",
+                            "cost_per_unique_inline_link_click",
+                            "offsite_conversion_fb_pixel_add_to_cart",
+                            "offsite_conversion_fb_pixel_purchase",
+                            "offsite_conversion_fb_pixel_initiate_checkout",
+                            "sum_roas",
+                        ],
+                        axis=1,
+                    )
+                    facebook_adset_mean_df = facebook_adset_df[
+                        [
+                            "frequency",
+                            "cpm",
+                            "website_ctr",
+                            "purchase_roas",
+                            "cost_per_unique_inline_link_click",
+                            "offsite_conversion_fb_pixel_add_to_cart",
+                            "offsite_conversion_fb_pixel_purchase",
+                            "offsite_conversion_fb_pixel_initiate_checkout",
+                            "sum_roas",
+                        ]
+                    ]
+                    facebook_adset_sum = facebook_adset_sum_df.sum(axis=0)
+                    facebook_adset_sum = facebook_adset_sum.to_dict()
+                    facebook_adset_mean = facebook_adset_mean_df.mean(axis=0)
+                    facebook_adset_mean = facebook_adset_mean.to_dict()
+                    facebook_adset.append(
+                        {
+                            "adset_name": adset,
+                            "sum": facebook_adset_sum,
+                            "mean": facebook_adset_mean,
+                        }
+                    )
                 facebook_campaign_df = facebook_campaign_df.groupby(
                     by="date", as_index=False
                 ).agg(
@@ -1287,6 +1339,7 @@ class Retrieves(APIView):
                     "options": option_data,
                     "sum": product_total_sum,
                     "mean": product_total_mean,
+                    "adset": facebook_adset,
                 }
 
         elif imweb_data and facebook_data:
@@ -1579,6 +1632,57 @@ class Retrieves(APIView):
                 facebook_campaign_df = facebook_df[
                     facebook_df["campaign_name"] == product["name"]
                 ]
+                adset_name_list = facebook_campaign_df["adset_name"].tolist()
+                adset_name_list = set(adset_name_list)
+                adset_name_list = list(adset_name_list)
+                facebook_adset = []
+                for adset in adset_name_list:
+                    facebook_adset_df = facebook_campaign_df[
+                        facebook_campaign_df["adset_name"] == adset
+                    ]
+                    facebook_adset_sum_df = facebook_adset_df.drop(
+                        [
+                            "campaign_id",
+                            "campaign_name",
+                            "adset_name",
+                            "date",
+                            "frequency",
+                            "cpm",
+                            "website_ctr",
+                            "purchase_roas",
+                            "cost_per_unique_inline_link_click",
+                            "offsite_conversion_fb_pixel_add_to_cart",
+                            "offsite_conversion_fb_pixel_purchase",
+                            "offsite_conversion_fb_pixel_initiate_checkout",
+                            "sum_roas",
+                        ],
+                        axis=1,
+                    )
+                    facebook_adset_mean_df = facebook_adset_df[
+                        [
+                            "frequency",
+                            "cpm",
+                            "website_ctr",
+                            "purchase_roas",
+                            "cost_per_unique_inline_link_click",
+                            "offsite_conversion_fb_pixel_add_to_cart",
+                            "offsite_conversion_fb_pixel_purchase",
+                            "offsite_conversion_fb_pixel_initiate_checkout",
+                            "sum_roas",
+                        ]
+                    ]
+                    facebook_adset_sum = facebook_adset_sum_df.sum(axis=0)
+                    facebook_adset_sum = facebook_adset_sum.to_dict()
+                    facebook_adset_mean = facebook_adset_mean_df.mean(axis=0)
+                    facebook_adset_mean = facebook_adset_mean.to_dict()
+                    facebook_adset.append(
+                        {
+                            "adset_name": adset,
+                            "sum": facebook_adset_sum,
+                            "mean": facebook_adset_mean,
+                        }
+                    )
+
                 facebook_campaign_df = facebook_campaign_df.groupby(
                     by="date", as_index=False
                 ).agg(
@@ -1743,6 +1847,7 @@ class Retrieves(APIView):
                     "options": option_data,
                     "sum": product_total_sum,
                     "mean": product_total_mean,
+                    "adset": facebook_adset,
                 }
 
         facebook_total_df = facebook_total_df.merge(exchange_rate_df, on="date")
