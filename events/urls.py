@@ -1,5 +1,5 @@
 from django.urls import path
-from events.views import Events, CreateEvent, UpdateEvent, EventsCount
+from events.views import EventsCount, CreateEvent, UpdateEvent, Events
 
 urlpatterns = [
     path("<int:brand_pk>", Events.as_view()),
