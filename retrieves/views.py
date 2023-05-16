@@ -510,7 +510,17 @@ class Retrieves(APIView):
                         )
                         imweb_option_df = imweb_option_df.set_index("date")
                         option_total = imweb_option_df.to_dict("index")
-                        option_data[option["name"]] = option_total
+                        option_total_sum_df = imweb_option_df[["option_count"]]
+                        option_total_mean_df = imweb_option_df[["option_rate"]]
+                        option_total_sum = option_total_sum_df.sum(axis=0)
+                        option_total_sum = option_total_sum.to_dict()
+                        option_total_mean = option_total_mean_df.mean(axis=0)
+                        option_total_mean = option_total_mean.to_dict()
+                        option_data[option["name"]] = {
+                            "option_total": option_total,
+                            "sum": option_total_sum,
+                            "mean": option_total_mean,
+                        }
                 facebook_campaign_df = pd.DataFrame(
                     {
                         "date": date_list,
@@ -827,7 +837,17 @@ class Retrieves(APIView):
                             ["imweb_option", "imweb_count"], axis=1
                         ).set_index("date")
                         option_total = imweb_option_df.to_dict("index")
-                        option_data[option["name"]] = option_total
+                        option_total_sum_df = imweb_option_df[["option_count"]]
+                        option_total_mean_df = imweb_option_df[["option_rate"]]
+                        option_total_sum = option_total_sum_df.sum(axis=0)
+                        option_total_sum = option_total_sum.to_dict()
+                        option_total_mean = option_total_mean_df.mean(axis=0)
+                        option_total_mean = option_total_mean.to_dict()
+                        option_data[option["name"]] = {
+                            "option_total": option_total,
+                            "sum": option_total_sum,
+                            "mean": option_total_mean,
+                        }
 
                 imweb_product_df = (
                     imweb_product_df.groupby(by="imweb_order_time", as_index=False)
@@ -1120,7 +1140,17 @@ class Retrieves(APIView):
                         )
                         imweb_option_df = imweb_option_df.set_index("date")
                         option_total = imweb_option_df.to_dict("index")
-                        option_data[option["name"]] = option_total
+                        option_total_sum_df = imweb_option_df[["option_count"]]
+                        option_total_mean_df = imweb_option_df[["option_rate"]]
+                        option_total_sum = option_total_sum_df.sum(axis=0)
+                        option_total_sum = option_total_sum.to_dict()
+                        option_total_mean = option_total_mean_df.mean(axis=0)
+                        option_total_mean = option_total_mean.to_dict()
+                        option_data[option["name"]] = {
+                            "option_total": option_total,
+                            "sum": option_total_sum,
+                            "mean": option_total_mean,
+                        }
 
                 facebook_campaign_df = facebook_df[
                     facebook_df["campaign_name"] == product["name"]
@@ -1578,7 +1608,17 @@ class Retrieves(APIView):
                             ["imweb_option", "imweb_count"], axis=1
                         ).set_index("date")
                         option_total = imweb_option_df.to_dict("index")
-                        option_data[option["name"]] = option_total
+                        option_total_sum_df = imweb_option_df[["option_count"]]
+                        option_total_mean_df = imweb_option_df[["option_rate"]]
+                        option_total_sum = option_total_sum_df.sum(axis=0)
+                        option_total_sum = option_total_sum.to_dict()
+                        option_total_mean = option_total_mean_df.mean(axis=0)
+                        option_total_mean = option_total_mean.to_dict()
+                        option_data[option["name"]] = {
+                            "option_total": option_total,
+                            "sum": option_total_sum,
+                            "mean": option_total_mean,
+                        }
 
                 imweb_product_df = (
                     imweb_product_df.groupby(by="imweb_order_time", as_index=False)
