@@ -15,13 +15,16 @@ class Brand(CommonModel):
 
 class Data(CommonModel):
     brand = models.ForeignKey(to="brands.Brand", on_delete=models.CASCADE)
-    imweb_price = models.IntegerField()
-    imweb_deliv_price = models.IntegerField()
-    product_cost = models.IntegerField()
+    imweb_price = models.PositiveIntegerField()
+    imweb_deliv_price = models.PositiveIntegerField()
+    product_cost = models.PositiveIntegerField()
     product_profit = models.IntegerField()
-    facebook_ad_expense_krw = models.IntegerField()
-    expense = models.IntegerField()
+    facebook_ad_expense_krw = models.PositiveIntegerField()
+    expense = models.PositiveIntegerField()
     operating_profit = models.IntegerField()
+    imweb_nomal_order_counter = models.PositiveIntegerField()
+    imweb_npay_order_counter = models.PositiveIntegerField()
+    imweb_count = models.PositiveIntegerField()
     date = models.DateField()
 
     def __str__(self) -> str:
