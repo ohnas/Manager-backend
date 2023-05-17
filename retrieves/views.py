@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.adsinsights import AdsInsights
 from facebook_business.api import FacebookAdsApi
-from brands.models import Brand
+from brands.models import Brand, Data
 from products.models import Product
 from sites.models import Site
 from datetime import datetime, timedelta
@@ -1976,6 +1976,51 @@ class Retrieves(APIView):
         data["imweb_nomal_order_counter"] = imweb_nomal_order_counter
         data["imweb_npay_order_counter"] = imweb_npay_order_counter
         data["facebook_data"] = facebook_data
+
+        data["brand_save_message"] = {}
+        today = datetime.today().strftime("%Y-%m-%d")
+        if (
+            "total" in data
+            and "imweb_nomal_order_counter" in data
+            and "imweb_npay_order_counter" in data
+        ):
+            for date in date_list:
+                if date != today:
+                    if Data.objects.filter(brand=brand, date=date).exists():
+                        data["brand_save_message"][date] = "이미 저장되어 있습니다"
+                    else:
+                        imweb_price = data["total"][date]["imweb_price"]
+                        imweb_deliv_price = data["total"][date]["imweb_deliv_price"]
+                        product_cost = data["total"][date]["product_cost"]
+                        product_profit = data["total"][date]["product_profit"]
+                        facebook_ad_expense_krw = data["total"][date][
+                            "facebook_ad_expense_krw"
+                        ]
+                        expense = data["total"][date]["expense"]
+                        operating_profit = data["total"][date]["operating_profit"]
+                        imweb_nomal_order_counter = data["imweb_nomal_order_counter"][
+                            date
+                        ]
+                        imweb_npay_order_counter = data["imweb_npay_order_counter"][
+                            date
+                        ]
+                        imweb_count = data["total"][date]["imweb_count"]
+                        d = Data(
+                            brand=brand,
+                            imweb_price=imweb_price,
+                            imweb_deliv_price=imweb_deliv_price,
+                            product_cost=product_cost,
+                            product_profit=product_profit,
+                            facebook_ad_expense_krw=facebook_ad_expense_krw,
+                            expense=expense,
+                            operating_profit=operating_profit,
+                            imweb_nomal_order_counter=imweb_nomal_order_counter,
+                            imweb_npay_order_counter=imweb_npay_order_counter,
+                            imweb_count=imweb_count,
+                            date=date,
+                        )
+                        d.save()
+                        data["brand_save_message"][date] = "저장 완료"
 
         return Response(data)
 
