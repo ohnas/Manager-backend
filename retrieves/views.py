@@ -493,6 +493,8 @@ class Retrieves(APIView):
                         "product_profit": 0,
                         "sale_expense": 0,
                         "shipment_quantity": 0,
+                        "product_quantity": 0,
+                        "product_gift_quantity": 0,
                     }
                 )
                 pk = product["id"]
@@ -676,6 +678,12 @@ class Retrieves(APIView):
             imweb_df["shipment_quantity"] = (
                 imweb_df["imweb_count"] * imweb_df["quantity"]
             ) + (imweb_df["imweb_count"] * imweb_df["gift_quantity"])
+            imweb_df["product_quantity"] = (
+                imweb_df["imweb_count"] * imweb_df["quantity"]
+            )
+            imweb_df["product_gift_quantity"] = (
+                imweb_df["imweb_count"] * imweb_df["gift_quantity"]
+            )
             imweb_df["product_cost"] = imweb_df["cost"] * imweb_df["shipment_quantity"]
             imweb_df["product_profit"] = (
                 imweb_df["imweb_price"]
@@ -867,6 +875,8 @@ class Retrieves(APIView):
                             "product_profit": "sum",
                             "sale_expense": "sum",
                             "shipment_quantity": "sum",
+                            "product_quantity": "sum",
+                            "product_gift_quantity": "sum",
                         }
                     )
                     .rename(columns={"imweb_order_time": "date"})
@@ -891,6 +901,8 @@ class Retrieves(APIView):
                                     "product_profit": 0,
                                     "sale_expense": 0,
                                     "shipment_quantity": 0,
+                                    "product_quantity": 0,
+                                    "product_gift_quantity": 0,
                                 }
                             ]
                         )
@@ -1123,6 +1135,8 @@ class Retrieves(APIView):
                         "product_profit": 0,
                         "sale_expense": 0,
                         "shipment_quantity": 0,
+                        "product_quantity": 0,
+                        "product_gift_quantity": 0,
                     }
                 )
                 pk = product["id"]
@@ -1174,9 +1188,6 @@ class Retrieves(APIView):
                             "website_ctr",
                             "purchase_roas",
                             "cost_per_unique_inline_link_click",
-                            "offsite_conversion_fb_pixel_add_to_cart",
-                            "offsite_conversion_fb_pixel_purchase",
-                            "offsite_conversion_fb_pixel_initiate_checkout",
                             "sum_roas",
                         ],
                         axis=1,
@@ -1188,9 +1199,6 @@ class Retrieves(APIView):
                             "website_ctr",
                             "purchase_roas",
                             "cost_per_unique_inline_link_click",
-                            "offsite_conversion_fb_pixel_add_to_cart",
-                            "offsite_conversion_fb_pixel_purchase",
-                            "offsite_conversion_fb_pixel_initiate_checkout",
                             "sum_roas",
                         ]
                     ]
@@ -1404,6 +1412,12 @@ class Retrieves(APIView):
             imweb_df["shipment_quantity"] = (
                 imweb_df["imweb_count"] * imweb_df["quantity"]
             ) + (imweb_df["imweb_count"] * imweb_df["gift_quantity"])
+            imweb_df["product_quantity"] = (
+                imweb_df["imweb_count"] * imweb_df["quantity"]
+            )
+            imweb_df["product_gift_quantity"] = (
+                imweb_df["imweb_count"] * imweb_df["gift_quantity"]
+            )
             imweb_df["product_cost"] = imweb_df["cost"] * imweb_df["shipment_quantity"]
             imweb_df["product_profit"] = (
                 imweb_df["imweb_price"]
@@ -1411,7 +1425,6 @@ class Retrieves(APIView):
                 - imweb_df["product_cost"]
             )
             imweb_df["sale_expense"] = imweb_df["imweb_price"] * 0.033
-
             imweb_total_df = (
                 imweb_df.groupby(by="imweb_order_time", as_index=False)
                 .agg(
@@ -1638,6 +1651,8 @@ class Retrieves(APIView):
                             "product_profit": "sum",
                             "sale_expense": "sum",
                             "shipment_quantity": "sum",
+                            "product_quantity": "sum",
+                            "product_gift_quantity": "sum",
                         }
                     )
                     .rename(columns={"imweb_order_time": "date"})
@@ -1662,6 +1677,8 @@ class Retrieves(APIView):
                                     "product_profit": 0,
                                     "sale_expense": 0,
                                     "shipment_quantity": 0,
+                                    "product_quantity": 0,
+                                    "product_gift_quantity": 0,
                                 }
                             ]
                         )
@@ -1691,9 +1708,6 @@ class Retrieves(APIView):
                             "website_ctr",
                             "purchase_roas",
                             "cost_per_unique_inline_link_click",
-                            "offsite_conversion_fb_pixel_add_to_cart",
-                            "offsite_conversion_fb_pixel_purchase",
-                            "offsite_conversion_fb_pixel_initiate_checkout",
                             "sum_roas",
                         ],
                         axis=1,
@@ -1705,9 +1719,6 @@ class Retrieves(APIView):
                             "website_ctr",
                             "purchase_roas",
                             "cost_per_unique_inline_link_click",
-                            "offsite_conversion_fb_pixel_add_to_cart",
-                            "offsite_conversion_fb_pixel_purchase",
-                            "offsite_conversion_fb_pixel_initiate_checkout",
                             "sum_roas",
                         ]
                     ]
