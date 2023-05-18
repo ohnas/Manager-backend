@@ -7,7 +7,7 @@ from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.adsinsights import AdsInsights
 from facebook_business.api import FacebookAdsApi
 from brands.models import Brand, BrandData
-from products.models import Product
+from products.models import Product, ProductData
 from sites.models import Site
 from datetime import datetime, timedelta
 import requests
@@ -1989,6 +1989,7 @@ class Retrieves(APIView):
         data["facebook_data"] = facebook_data
 
         data["brand_save_message"] = {}
+        data["product_save_message"] = {}
         today = datetime.today().strftime("%Y-%m-%d")
         if (
             "total" in data
@@ -1997,7 +1998,7 @@ class Retrieves(APIView):
         ):
             for date in date_list:
                 if date != today:
-                    if Data.objects.filter(brand=brand, date=date).exists():
+                    if BrandData.objects.filter(brand=brand, date=date).exists():
                         data["brand_save_message"][date] = "이미 저장되어 있습니다"
                     else:
                         imweb_price = data["total"][date]["imweb_price"]
@@ -2032,6 +2033,35 @@ class Retrieves(APIView):
                         )
                         d.save()
                         data["brand_save_message"][date] = "저장 완료"
+
+        for product in products:
+            for date in date_list:
+                if date != today and product["name"] in data:
+                    pk = product["id"]
+                    current_product = Product.objects.get(pk=pk)
+                    if ProductData.objects.filter(
+                        product=current_product, date=date
+                    ).exists():
+                        data["product_save_message"][date] = "이미 저장되어 있습니다"
+                    else:
+                        product_quantity = data[product["name"]]["date"][date][
+                            "product_quantity"
+                        ]
+                        product_gift_quantity = data[product["name"]]["date"][date][
+                            "product_gift_quantity"
+                        ]
+                        shipment_quantity = data[product["name"]]["date"][date][
+                            "shipment_quantity"
+                        ]
+                        d = ProductData(
+                            product=current_product,
+                            product_quantity=product_quantity,
+                            product_gift_quantity=product_gift_quantity,
+                            shipment_quantity=shipment_quantity,
+                            date=date,
+                        )
+                        d.save()
+                        data["product_save_message"][date] = "저장 완료"
 
         return Response(data)
 
