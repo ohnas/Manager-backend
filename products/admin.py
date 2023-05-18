@@ -1,5 +1,5 @@
 from django.contrib import admin
-from products.models import Product, Options
+from products.models import Product, Options, ProductData
 
 # Register your models here.
 
@@ -10,5 +10,10 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 @admin.register(Options)
+class OptionsAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(ProductData)
 class OptionsAdmin(admin.ModelAdmin):
     pass

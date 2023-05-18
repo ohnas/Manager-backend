@@ -13,7 +13,7 @@ class Brand(CommonModel):
         return self.name
 
 
-class Data(CommonModel):
+class BrandData(CommonModel):
     brand = models.ForeignKey(to="brands.Brand", on_delete=models.CASCADE)
     imweb_price = models.PositiveIntegerField()
     imweb_deliv_price = models.PositiveIntegerField()

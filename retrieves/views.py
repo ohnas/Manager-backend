@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.adsinsights import AdsInsights
 from facebook_business.api import FacebookAdsApi
-from brands.models import Brand, Data
+from brands.models import Brand, BrandData
 from products.models import Product
 from sites.models import Site
 from datetime import datetime, timedelta
@@ -2016,7 +2016,7 @@ class Retrieves(APIView):
                             date
                         ]
                         imweb_count = data["total"][date]["imweb_count"]
-                        d = Data(
+                        d = BrandData(
                             brand=brand,
                             imweb_price=imweb_price,
                             imweb_deliv_price=imweb_deliv_price,
