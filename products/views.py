@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Sum
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -11,7 +12,7 @@ from products.serializers import (
     TinyBrandSerializer,
     TinyProductSerializer,
 )
-from products.models import Product, Options
+from products.models import Product, Options, ProductData
 from brands.models import Brand
 
 
@@ -193,27 +194,92 @@ class UpdateOption(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-# class MonthlyProductData(APIView):
+class MonthlyProductData(APIView):
+    permission_classes = [IsAuthenticated]
 
-#     permission_classes = [IsAuthenticated]
+    def get_object(self, brand_pk):
+        try:
+            return Brand.objects.get(pk=brand_pk)
+        except Brand.DoesNotExist:
+            raise NotFound
 
-#     def get_object(self, pk):
-#         try:
-#             return Brand.objects.get(pk=pk)
-#         except Brand.DoesNotExist:
-#             raise NotFound
+    def get(self, request, brand_pk):
+        brand = self.get_object(brand_pk)
+        products = brand.product_set.values(
+            "id",
+            "name",
+        )
+        from_month = request.query_params["monthFrom"]
+        to_month = request.query_params["monthTo"]
+        selected_month_from = datetime.strptime(from_month, "%Y-%m")
+        selected_month_to = datetime.strptime(to_month, "%Y-%m")
+        selected_year_from = selected_month_from.year
+        selected_month_from = selected_month_from.month
+        selected_month_to = selected_month_to.month
+        data = {}
+        month_list = []
+        while selected_month_from <= selected_month_to:
+            month_list.append(f"{selected_year_from}-{selected_month_from}")
+            selected_month_from += 1
+        product_pk_list = []
+        for p in products:
+            data[p["name"]] = {}
+            pk = p["id"]
+            product_pk_list.append(pk)
+            current_product = Product.objects.get(pk=pk)
+            for item in month_list:
+                year_month = item.split("-")
+                year = year_month[0]
+                month = year_month[1]
+                if ProductData.objects.filter(
+                    product=current_product, date__year=year, date__month=month
+                ).exists():
+                    product_month_data = ProductData.objects.filter(
+                        product=current_product, date__year=year, date__month=month
+                    ).aggregate(
+                        sum_imweb_price=Sum("imweb_price"),
+                        sum_imweb_deliv_price=Sum("imweb_deliv_price"),
+                        sum_product_quantity=Sum("product_quantity"),
+                        sum_product_gift_quantity=Sum("product_gift_quantity"),
+                        sum_shipment_quantity=Sum("shipment_quantity"),
+                    )
+                    product_month_data["sum_price"] = (
+                        product_month_data["sum_imweb_price"]
+                        + product_month_data["sum_imweb_deliv_price"]
+                    )
+                    data[p["name"]][item] = product_month_data
+                else:
+                    product_month_data = {
+                        "sum_imweb_price": 0,
+                        "sum_imweb_deliv_price": 0,
+                        "sum_product_quantity": 0,
+                        "sum_product_gift_quantity": 0,
+                        "sum_shipment_quantity": 0,
+                        "sum_price": 0,
+                    }
+                    data[p["name"]][item] = product_month_data
+        data["sum"] = {}
+        for item in month_list:
+            year_month = item.split("-")
+            year = year_month[0]
+            month = year_month[1]
+            if ProductData.objects.filter(
+                product__in=product_pk_list, date__year=year, date__month=month
+            ).exists():
+                product_month_sum = ProductData.objects.filter(
+                    product__in=product_pk_list, date__year=year, date__month=month
+                ).aggregate(
+                    total_product_quantity=Sum("product_quantity"),
+                    total_product_gift_quantity=Sum("product_gift_quantity"),
+                    total_shipment_quantity=Sum("shipment_quantity"),
+                )
+                data["sum"][item] = product_month_sum
+            else:
+                product_month_sum = {
+                    "total_product_quantity": 0,
+                    "total_product_gift_quantity": 0,
+                    "total_shipment_quantity": 0,
+                }
+                data["sum"][item] = product_month_sum
 
-#     def get(self, request, pk):
-#         brand = self.get_object(pk)
-#         from_month = request.query_params["monthFrom"]
-#         to_month = request.query_params["monthTo"]
-#         selected_month_from = datetime.strptime(from_month, "%Y-%m")
-#         selected_month_to = datetime.strptime(to_month, "%Y-%m")
-#         selected_year_from = selected_month_from.year
-#         selected_month_from = selected_month_from.month
-#         selected_month_to = selected_month_to.month
-#         data = {}
-#         month_list = []
-#         while selected_month_from <= selected_month_to:
-#             month_list.append(f"{selected_year_from}-{selected_month_from}")
-#             selected_month_from += 1
+        return Response(data)
