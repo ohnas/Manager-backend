@@ -2044,6 +2044,10 @@ class Retrieves(APIView):
                     ).exists():
                         data["product_save_message"][date] = "이미 저장되어 있습니다"
                     else:
+                        imweb_price = data[product["name"]]["date"][date]["imweb_price"]
+                        imweb_deliv_price = data[product["name"]]["date"][date][
+                            "imweb_deliv_price"
+                        ]
                         product_quantity = data[product["name"]]["date"][date][
                             "product_quantity"
                         ]
@@ -2055,6 +2059,8 @@ class Retrieves(APIView):
                         ]
                         d = ProductData(
                             product=current_product,
+                            imweb_price=imweb_price,
+                            imweb_deliv_price=imweb_deliv_price,
                             product_quantity=product_quantity,
                             product_gift_quantity=product_gift_quantity,
                             shipment_quantity=shipment_quantity,

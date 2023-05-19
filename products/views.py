@@ -1,9 +1,10 @@
 from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.exceptions import ParseError, NotFound
 from rest_framework import status
+from datetime import datetime
 from products.serializers import (
     ProductSerializer,
     OptionsSerializer,
@@ -190,3 +191,29 @@ class UpdateOption(APIView):
         option = self.get_object(pk)
         option.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+# class MonthlyProductData(APIView):
+
+#     permission_classes = [IsAuthenticated]
+
+#     def get_object(self, pk):
+#         try:
+#             return Brand.objects.get(pk=pk)
+#         except Brand.DoesNotExist:
+#             raise NotFound
+
+#     def get(self, request, pk):
+#         brand = self.get_object(pk)
+#         from_month = request.query_params["monthFrom"]
+#         to_month = request.query_params["monthTo"]
+#         selected_month_from = datetime.strptime(from_month, "%Y-%m")
+#         selected_month_to = datetime.strptime(to_month, "%Y-%m")
+#         selected_year_from = selected_month_from.year
+#         selected_month_from = selected_month_from.month
+#         selected_month_to = selected_month_to.month
+#         data = {}
+#         month_list = []
+#         while selected_month_from <= selected_month_to:
+#             month_list.append(f"{selected_year_from}-{selected_month_from}")
+#             selected_month_from += 1

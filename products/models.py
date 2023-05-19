@@ -32,6 +32,8 @@ class Options(CommonModel):
 
 class ProductData(CommonModel):
     product = models.ForeignKey(to="products.Product", on_delete=models.CASCADE)
+    imweb_price = models.PositiveIntegerField(default=0)
+    imweb_deliv_price = models.PositiveIntegerField(default=0)
     product_quantity = models.PositiveIntegerField()
     product_gift_quantity = models.PositiveIntegerField()
     shipment_quantity = models.PositiveIntegerField()
