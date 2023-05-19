@@ -29,3 +29,13 @@ class BrandData(CommonModel):
 
     def __str__(self) -> str:
         return f"{self.brand.name}'s Data from {self.date}"
+
+
+class ExpenseByHand(CommonModel):
+    brand = models.ForeignKey(to="brands.Brand", on_delete=models.CASCADE)
+    description = models.CharField(max_length=150)
+    expense_by_hand = models.PositiveIntegerField()
+    date = models.DateField()
+
+    def __str__(self) -> str:
+        return f"{self.brand.name}'s {self.description} from {self.date}"
