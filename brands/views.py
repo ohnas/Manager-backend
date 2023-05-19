@@ -8,7 +8,7 @@ from rest_framework import status
 from datetime import datetime, timedelta
 from dateutil import relativedelta
 from brands.serializers import BrandSerializer, BrandDetailSerializer
-from brands.models import Brand, BrandData
+from brands.models import Brand, BrandData, ExpenseByHand
 from users.serializers import UserSerializer
 from users.models import User
 
@@ -185,9 +185,28 @@ class MonthlyBrandData(APIView):
                     sum_imweb_npay_order_counter=Sum("imweb_npay_order_counter"),
                     sum_imweb_count=Sum("imweb_count"),
                 )
+                brand_month_expense_by_hand = ExpenseByHand.objects.filter(
+                    brand=brand, date__year=year, date__month=month
+                ).aggregate(Sum("expense_by_hand"))
+                if brand_month_expense_by_hand["expense_by_hand__sum"] is None:
+                    brand_month_expense_by_hand = 0
+                else:
+                    brand_month_expense_by_hand = brand_month_expense_by_hand[
+                        "expense_by_hand__sum"
+                    ]
+                brand_month_expense_by_hand_list = ExpenseByHand.objects.filter(
+                    brand=brand, date__year=year, date__month=month
+                ).values(
+                    "description",
+                    "expense_by_hand",
+                    "date",
+                )
                 brand_month_data["sum_price"] = (
                     brand_month_data["sum_imweb_price"]
                     + brand_month_data["sum_imweb_deliv_price"]
+                )
+                brand_month_data["total_expense"] = (
+                    brand_month_data["sum_expense"] + brand_month_expense_by_hand
                 )
                 brand_month_data["total_operating_profit_rate"] = (
                     brand_month_data["sum_operating_profit"]
@@ -206,6 +225,8 @@ class MonthlyBrandData(APIView):
                     / brand_month_data["sum_facebook_ad_expense_krw"]
                 ) * 100
                 data[item] = {
+                    "brand_month_expense_by_hand_list": brand_month_expense_by_hand_list,
+                    "brand_month_expense_by_hand": brand_month_expense_by_hand,
                     "missing_day_list": missing_day_list,
                     "brand_month_data": brand_month_data,
                 }
