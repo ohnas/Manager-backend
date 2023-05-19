@@ -166,6 +166,10 @@ class MonthlyBrandData(APIView):
                         current_month_first_day.strftime("%Y-%m-%d")
                     )
                     current_month_first_day += delta
+                missing_day_list = []
+                for day in current_month_day_list:
+                    if not BrandData.objects.filter(brand=brand, date=day).exists():
+                        missing_day_list.append(day)
 
                 brand_month_data = BrandData.objects.filter(
                     brand=brand, date__year=year, date__month=month
@@ -202,7 +206,7 @@ class MonthlyBrandData(APIView):
                     / brand_month_data["sum_facebook_ad_expense_krw"]
                 ) * 100
                 data[item] = {
-                    "day_list": current_month_day_list,
+                    "missing_day_list": missing_day_list,
                     "brand_month_data": brand_month_data,
                 }
 
