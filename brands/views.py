@@ -139,38 +139,53 @@ class MonthlyBrandData(APIView):
             year_month = item.split("-")
             year = year_month[0]
             month = year_month[1]
-            if not BrandData.objects.filter(
+            current_month = datetime.strptime(item, "%Y-%m")
+            yesterday = datetime.today() - timedelta(days=1)
+            if (
+                current_month.year == yesterday.year
+                and current_month.month == yesterday.month
+            ):
+                current_month_last_day = yesterday.date()
+            else:
+                current_next_month = current_month + relativedelta.relativedelta(
+                    months=1
+                )
+                current_month_last_day = current_next_month - timedelta(days=1)
+                current_month_last_day = current_month_last_day.date()
+
+            current_month_first_day = current_month.date()
+            delta = timedelta(days=1)
+            current_month_day_list = []
+            while current_month_first_day <= current_month_last_day:
+                current_month_day_list.append(
+                    current_month_first_day.strftime("%Y-%m-%d")
+                )
+                current_month_first_day += delta
+            missing_day_list = []
+            for day in current_month_day_list:
+                if not BrandData.objects.filter(brand=brand, date=day).exists():
+                    missing_day_list.append(day)
+
+            brand_month_expense_by_hand = ExpenseByHand.objects.filter(
+                brand=brand, date__year=year, date__month=month
+            ).aggregate(Sum("expense_by_hand"))
+            if brand_month_expense_by_hand["expense_by_hand__sum"] is None:
+                brand_month_expense_by_hand = 0
+            else:
+                brand_month_expense_by_hand = brand_month_expense_by_hand[
+                    "expense_by_hand__sum"
+                ]
+            brand_month_expense_by_hand_list = ExpenseByHand.objects.filter(
+                brand=brand, date__year=year, date__month=month
+            ).values(
+                "description",
+                "expense_by_hand",
+                "date",
+            )
+
+            if BrandData.objects.filter(
                 brand=brand, date__year=year, date__month=month
             ).exists():
-                data[item] = f"{item}의 저장된 데이터가 없습니다"
-            else:
-                current_month = datetime.strptime(item, "%Y-%m")
-                yesterday = datetime.today() - timedelta(days=1)
-                if (
-                    current_month.year == yesterday.year
-                    and current_month.month == yesterday.month
-                ):
-                    current_month_last_day = yesterday.date()
-                else:
-                    current_next_month = current_month + relativedelta.relativedelta(
-                        months=1
-                    )
-                    current_month_last_day = current_next_month - timedelta(days=1)
-                    current_month_last_day = current_month_last_day.date()
-
-                current_month_first_day = current_month.date()
-                delta = timedelta(days=1)
-                current_month_day_list = []
-                while current_month_first_day <= current_month_last_day:
-                    current_month_day_list.append(
-                        current_month_first_day.strftime("%Y-%m-%d")
-                    )
-                    current_month_first_day += delta
-                missing_day_list = []
-                for day in current_month_day_list:
-                    if not BrandData.objects.filter(brand=brand, date=day).exists():
-                        missing_day_list.append(day)
-
                 brand_month_data = BrandData.objects.filter(
                     brand=brand, date__year=year, date__month=month
                 ).aggregate(
@@ -184,22 +199,6 @@ class MonthlyBrandData(APIView):
                     sum_imweb_nomal_order_counter=Sum("imweb_nomal_order_counter"),
                     sum_imweb_npay_order_counter=Sum("imweb_npay_order_counter"),
                     sum_imweb_count=Sum("imweb_count"),
-                )
-                brand_month_expense_by_hand = ExpenseByHand.objects.filter(
-                    brand=brand, date__year=year, date__month=month
-                ).aggregate(Sum("expense_by_hand"))
-                if brand_month_expense_by_hand["expense_by_hand__sum"] is None:
-                    brand_month_expense_by_hand = 0
-                else:
-                    brand_month_expense_by_hand = brand_month_expense_by_hand[
-                        "expense_by_hand__sum"
-                    ]
-                brand_month_expense_by_hand_list = ExpenseByHand.objects.filter(
-                    brand=brand, date__year=year, date__month=month
-                ).values(
-                    "description",
-                    "expense_by_hand",
-                    "date",
                 )
                 brand_month_data["sum_price"] = (
                     brand_month_data["sum_imweb_price"]
@@ -224,11 +223,30 @@ class MonthlyBrandData(APIView):
                     brand_month_data["sum_imweb_price"]
                     / brand_month_data["sum_facebook_ad_expense_krw"]
                 ) * 100
-                data[item] = {
-                    "brand_month_expense_by_hand_list": brand_month_expense_by_hand_list,
-                    "brand_month_expense_by_hand": brand_month_expense_by_hand,
-                    "missing_day_list": missing_day_list,
-                    "brand_month_data": brand_month_data,
+            else:
+                brand_month_data = {
+                    "sum_imweb_price": 0,
+                    "sum_imweb_deliv_price": 0,
+                    "sum_product_cost": 0,
+                    "sum_product_profit": 0,
+                    "sum_facebook_ad_expense_krw": 0.0,
+                    "sum_expense": 0.0,
+                    "sum_operating_profit": 0.0,
+                    "sum_imweb_nomal_order_counter": 0,
+                    "sum_imweb_npay_order_counter": 0,
+                    "sum_imweb_count": 0,
+                    "sum_price": 0,
+                    "total_expense": 0.0,
+                    "total_operating_profit_rate": 0.0,
+                    "total_product_cost_rate": 0.0,
+                    "total_facebook_ad_expense_krw_rate": 0.0,
+                    "total_roas": 0.0,
                 }
+            data[item] = {
+                "brand_month_expense_by_hand_list": brand_month_expense_by_hand_list,
+                "brand_month_expense_by_hand": brand_month_expense_by_hand,
+                "missing_day_list": missing_day_list,
+                "brand_month_data": brand_month_data,
+            }
 
         return Response(data)
