@@ -268,7 +268,7 @@ class CreateExpenseByHand(APIView):
     def post(self, request):
         brand = request.data.get("brand")
         description = request.data.get("description")
-        expense_by_hand = request.data.get("expense_by_hand")
+        expense_by_hand = request.data.get("expenseByHand")
         date = request.data.get("date")
         if not brand or not description or not expense_by_hand or not date:
             raise ParseError
