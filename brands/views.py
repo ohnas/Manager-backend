@@ -7,7 +7,12 @@ from rest_framework.exceptions import NotFound, ParseError
 from rest_framework import status
 from datetime import datetime, timedelta
 from dateutil import relativedelta
-from brands.serializers import BrandSerializer, BrandDetailSerializer
+from brands.serializers import (
+    BrandSerializer,
+    BrandDetailSerializer,
+    TinyBrandSerializer,
+    ExpenseByHandSerializer,
+)
 from brands.models import Brand, BrandData, ExpenseByHand
 from users.serializers import UserSerializer
 from users.models import User
@@ -250,3 +255,29 @@ class MonthlyBrandData(APIView):
             }
 
         return Response(data)
+
+
+class CreateExpenseByHand(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        all_brands = Brand.objects.all()
+        serializer = TinyBrandSerializer(all_brands, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        brand = request.data.get("brand")
+        description = request.data.get("description")
+        expense_by_hand = request.data.get("expense_by_hand")
+        date = request.data.get("date")
+        if not brand or not description or not expense_by_hand or not date:
+            raise ParseError
+        brand = Brand.objects.get(pk=brand)
+        serializer = ExpenseByHandSerializer(data=request.data)
+        if serializer.is_valid():
+            with transaction.atomic():
+                expense = serializer.save(brand=brand)
+                serializer = ExpenseByHandSerializer(expense)
+                return Response(serializer.data)
+        else:
+            return Response(serializer.errors)
