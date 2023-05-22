@@ -257,6 +257,22 @@ class MonthlyBrandData(APIView):
         return Response(data)
 
 
+class ExpenseByHandList(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get_object(self, brand_pk):
+        try:
+            return Brand.objects.get(pk=brand_pk)
+        except Brand.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, brand_pk):
+        brand = self.get_object(brand_pk)
+        expense = brand.expensebyhand_set.all()
+        serializer = ExpenseByHandSerializer(expense, many=True)
+        return Response(serializer.data)
+
+
 class CreateExpenseByHand(APIView):
     permission_classes = [IsAdminUser]
 
@@ -268,7 +284,7 @@ class CreateExpenseByHand(APIView):
     def post(self, request):
         brand = request.data.get("brand")
         description = request.data.get("description")
-        expense_by_hand = request.data.get("expenseByHand")
+        expense_by_hand = request.data.get("expense_by_hand")
         date = request.data.get("date")
         if not brand or not description or not expense_by_hand or not date:
             raise ParseError
@@ -276,7 +292,9 @@ class CreateExpenseByHand(APIView):
         serializer = ExpenseByHandSerializer(data=request.data)
         if serializer.is_valid():
             with transaction.atomic():
-                expense = serializer.save(brand=brand)
+                expense = serializer.save(
+                    brand=brand,
+                )
                 serializer = ExpenseByHandSerializer(expense)
                 return Response(serializer.data)
         else:

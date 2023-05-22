@@ -6,6 +6,7 @@ from brands.views import (
     CreateBrand,
     UpdateBrand,
     MonthlyBrandData,
+    ExpenseByHandList,
     CreateExpenseByHand,
     UpdateExpenseByHand,
 )
@@ -17,6 +18,7 @@ urlpatterns = [
     path("create", CreateBrand.as_view()),
     path("update/<int:pk>", UpdateBrand.as_view()),
     path("<int:pk>/monthly", MonthlyBrandData.as_view()),
+    path("expense/list/<int:brand_pk>", ExpenseByHandList.as_view()),
     path("create/expense", CreateExpenseByHand.as_view()),
     path("update/expense/<int:pk>", UpdateExpenseByHand.as_view()),
 ]
