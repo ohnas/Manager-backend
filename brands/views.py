@@ -281,3 +281,45 @@ class CreateExpenseByHand(APIView):
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class UpdateExpenseByHand(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get_object(self, pk):
+        try:
+            return ExpenseByHand.objects.get(pk=pk)
+        except ExpenseByHand.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, pk):
+        expense = self.get_object(pk)
+        serializer = ExpenseByHandSerializer(expense)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        expense = self.get_object(pk)
+        serializer = ExpenseByHandSerializer(expense, data=request.data, partial=True)
+        brand = request.data.get("brand")
+        if brand is None:
+            if serializer.is_valid():
+                with transaction.atomic():
+                    expense = serializer.save()
+                    serializer = ExpenseByHandSerializer(expense)
+                    return Response(serializer.data)
+            else:
+                return Response(serializer.errors)
+        else:
+            brand = Brand.objects.get(pk=brand)
+            if serializer.is_valid():
+                with transaction.atomic():
+                    expense = serializer.save(brand=brand)
+                    serializer = ExpenseByHandSerializer(expense)
+                    return Response(serializer.data)
+            else:
+                return Response(serializer.errors)
+
+    def delete(self, request, pk):
+        expense = self.get_object(pk)
+        expense.delete()
+        return Response(status=status.HTTP_200_OK)
