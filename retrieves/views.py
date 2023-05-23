@@ -6,8 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.adsinsights import AdsInsights
 from facebook_business.api import FacebookAdsApi
-from brands.models import Brand
-from products.models import Product
+from brands.models import Brand, BrandData
+from products.models import Product, ProductData
 from sites.models import Site
 from datetime import datetime, timedelta
 import requests
@@ -493,6 +493,8 @@ class Retrieves(APIView):
                         "product_profit": 0,
                         "sale_expense": 0,
                         "shipment_quantity": 0,
+                        "product_quantity": 0,
+                        "product_gift_quantity": 0,
                     }
                 )
                 pk = product["id"]
@@ -676,6 +678,12 @@ class Retrieves(APIView):
             imweb_df["shipment_quantity"] = (
                 imweb_df["imweb_count"] * imweb_df["quantity"]
             ) + (imweb_df["imweb_count"] * imweb_df["gift_quantity"])
+            imweb_df["product_quantity"] = (
+                imweb_df["imweb_count"] * imweb_df["quantity"]
+            )
+            imweb_df["product_gift_quantity"] = (
+                imweb_df["imweb_count"] * imweb_df["gift_quantity"]
+            )
             imweb_df["product_cost"] = imweb_df["cost"] * imweb_df["shipment_quantity"]
             imweb_df["product_profit"] = (
                 imweb_df["imweb_price"]
@@ -867,6 +875,8 @@ class Retrieves(APIView):
                             "product_profit": "sum",
                             "sale_expense": "sum",
                             "shipment_quantity": "sum",
+                            "product_quantity": "sum",
+                            "product_gift_quantity": "sum",
                         }
                     )
                     .rename(columns={"imweb_order_time": "date"})
@@ -891,6 +901,8 @@ class Retrieves(APIView):
                                     "product_profit": 0,
                                     "sale_expense": 0,
                                     "shipment_quantity": 0,
+                                    "product_quantity": 0,
+                                    "product_gift_quantity": 0,
                                 }
                             ]
                         )
@@ -1123,6 +1135,8 @@ class Retrieves(APIView):
                         "product_profit": 0,
                         "sale_expense": 0,
                         "shipment_quantity": 0,
+                        "product_quantity": 0,
+                        "product_gift_quantity": 0,
                     }
                 )
                 pk = product["id"]
@@ -1174,9 +1188,6 @@ class Retrieves(APIView):
                             "website_ctr",
                             "purchase_roas",
                             "cost_per_unique_inline_link_click",
-                            "offsite_conversion_fb_pixel_add_to_cart",
-                            "offsite_conversion_fb_pixel_purchase",
-                            "offsite_conversion_fb_pixel_initiate_checkout",
                             "sum_roas",
                         ],
                         axis=1,
@@ -1188,9 +1199,6 @@ class Retrieves(APIView):
                             "website_ctr",
                             "purchase_roas",
                             "cost_per_unique_inline_link_click",
-                            "offsite_conversion_fb_pixel_add_to_cart",
-                            "offsite_conversion_fb_pixel_purchase",
-                            "offsite_conversion_fb_pixel_initiate_checkout",
                             "sum_roas",
                         ]
                     ]
@@ -1404,6 +1412,12 @@ class Retrieves(APIView):
             imweb_df["shipment_quantity"] = (
                 imweb_df["imweb_count"] * imweb_df["quantity"]
             ) + (imweb_df["imweb_count"] * imweb_df["gift_quantity"])
+            imweb_df["product_quantity"] = (
+                imweb_df["imweb_count"] * imweb_df["quantity"]
+            )
+            imweb_df["product_gift_quantity"] = (
+                imweb_df["imweb_count"] * imweb_df["gift_quantity"]
+            )
             imweb_df["product_cost"] = imweb_df["cost"] * imweb_df["shipment_quantity"]
             imweb_df["product_profit"] = (
                 imweb_df["imweb_price"]
@@ -1411,7 +1425,6 @@ class Retrieves(APIView):
                 - imweb_df["product_cost"]
             )
             imweb_df["sale_expense"] = imweb_df["imweb_price"] * 0.033
-
             imweb_total_df = (
                 imweb_df.groupby(by="imweb_order_time", as_index=False)
                 .agg(
@@ -1638,6 +1651,8 @@ class Retrieves(APIView):
                             "product_profit": "sum",
                             "sale_expense": "sum",
                             "shipment_quantity": "sum",
+                            "product_quantity": "sum",
+                            "product_gift_quantity": "sum",
                         }
                     )
                     .rename(columns={"imweb_order_time": "date"})
@@ -1662,6 +1677,8 @@ class Retrieves(APIView):
                                     "product_profit": 0,
                                     "sale_expense": 0,
                                     "shipment_quantity": 0,
+                                    "product_quantity": 0,
+                                    "product_gift_quantity": 0,
                                 }
                             ]
                         )
@@ -1691,9 +1708,6 @@ class Retrieves(APIView):
                             "website_ctr",
                             "purchase_roas",
                             "cost_per_unique_inline_link_click",
-                            "offsite_conversion_fb_pixel_add_to_cart",
-                            "offsite_conversion_fb_pixel_purchase",
-                            "offsite_conversion_fb_pixel_initiate_checkout",
                             "sum_roas",
                         ],
                         axis=1,
@@ -1705,9 +1719,6 @@ class Retrieves(APIView):
                             "website_ctr",
                             "purchase_roas",
                             "cost_per_unique_inline_link_click",
-                            "offsite_conversion_fb_pixel_add_to_cart",
-                            "offsite_conversion_fb_pixel_purchase",
-                            "offsite_conversion_fb_pixel_initiate_checkout",
                             "sum_roas",
                         ]
                     ]
@@ -1976,6 +1987,87 @@ class Retrieves(APIView):
         data["imweb_nomal_order_counter"] = imweb_nomal_order_counter
         data["imweb_npay_order_counter"] = imweb_npay_order_counter
         data["facebook_data"] = facebook_data
+
+        data["brand_save_message"] = {}
+        data["product_save_message"] = {}
+        today = datetime.today().strftime("%Y-%m-%d")
+        if (
+            "total" in data
+            and "imweb_nomal_order_counter" in data
+            and "imweb_npay_order_counter" in data
+        ):
+            for date in date_list:
+                if date != today:
+                    if BrandData.objects.filter(brand=brand, date=date).exists():
+                        data["brand_save_message"][date] = "이미 저장되어 있습니다"
+                    else:
+                        imweb_price = data["total"][date]["imweb_price"]
+                        imweb_deliv_price = data["total"][date]["imweb_deliv_price"]
+                        product_cost = data["total"][date]["product_cost"]
+                        product_profit = data["total"][date]["product_profit"]
+                        facebook_ad_expense_krw = data["total"][date][
+                            "facebook_ad_expense_krw"
+                        ]
+                        expense = data["total"][date]["expense"]
+                        operating_profit = data["total"][date]["operating_profit"]
+                        imweb_nomal_order_counter = data["imweb_nomal_order_counter"][
+                            date
+                        ]
+                        imweb_npay_order_counter = data["imweb_npay_order_counter"][
+                            date
+                        ]
+                        imweb_count = data["total"][date]["imweb_count"]
+                        d = BrandData(
+                            brand=brand,
+                            imweb_price=imweb_price,
+                            imweb_deliv_price=imweb_deliv_price,
+                            product_cost=product_cost,
+                            product_profit=product_profit,
+                            facebook_ad_expense_krw=facebook_ad_expense_krw,
+                            expense=expense,
+                            operating_profit=operating_profit,
+                            imweb_nomal_order_counter=imweb_nomal_order_counter,
+                            imweb_npay_order_counter=imweb_npay_order_counter,
+                            imweb_count=imweb_count,
+                            date=date,
+                        )
+                        d.save()
+                        data["brand_save_message"][date] = "저장 완료"
+
+        for product in products:
+            for date in date_list:
+                if date != today and product["name"] in data:
+                    pk = product["id"]
+                    current_product = Product.objects.get(pk=pk)
+                    if ProductData.objects.filter(
+                        product=current_product, date=date
+                    ).exists():
+                        data["product_save_message"][date] = "이미 저장되어 있습니다"
+                    else:
+                        imweb_price = data[product["name"]]["date"][date]["imweb_price"]
+                        imweb_deliv_price = data[product["name"]]["date"][date][
+                            "imweb_deliv_price"
+                        ]
+                        product_quantity = data[product["name"]]["date"][date][
+                            "product_quantity"
+                        ]
+                        product_gift_quantity = data[product["name"]]["date"][date][
+                            "product_gift_quantity"
+                        ]
+                        shipment_quantity = data[product["name"]]["date"][date][
+                            "shipment_quantity"
+                        ]
+                        d = ProductData(
+                            product=current_product,
+                            imweb_price=imweb_price,
+                            imweb_deliv_price=imweb_deliv_price,
+                            product_quantity=product_quantity,
+                            product_gift_quantity=product_gift_quantity,
+                            shipment_quantity=shipment_quantity,
+                            date=date,
+                        )
+                        d.save()
+                        data["product_save_message"][date] = "저장 완료"
 
         return Response(data)
 

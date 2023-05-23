@@ -4,7 +4,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound, ParseError
-from rest_framework import status
 from brands.models import Brand
 from visits.models import Visit
 from visits.serializers import VisitSerializer
@@ -14,7 +13,6 @@ from datetime import datetime, timedelta
 
 
 class Visits(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def get_object(self, brand_pk):
@@ -58,7 +56,6 @@ class Visits(APIView):
 
 
 class CreateVisit(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def get_object(self, brand_pk):
@@ -86,7 +83,6 @@ class CreateVisit(APIView):
 
 
 class UpdateVisit(APIView):
-
     permission_classes = [IsAuthenticated]
 
     def get_object(self, pk):
@@ -110,3 +106,43 @@ class UpdateVisit(APIView):
                 return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
+
+class MonthlyVisitData(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, brand_pk):
+        try:
+            return Brand.objects.get(pk=brand_pk)
+        except Brand.DoesNotExist:
+            raise NotFound
+
+    def get(self, request, brand_pk):
+        brand = self.get_object(brand_pk)
+        from_month = request.query_params["monthFrom"]
+        to_month = request.query_params["monthTo"]
+        selected_month_from = datetime.strptime(from_month, "%Y-%m")
+        selected_month_to = datetime.strptime(to_month, "%Y-%m")
+        selected_year_from = selected_month_from.year
+        selected_month_from = selected_month_from.month
+        selected_month_to = selected_month_to.month
+        data = {}
+        month_list = []
+        while selected_month_from <= selected_month_to:
+            month_list.append(f"{selected_year_from}-{selected_month_from}")
+            selected_month_from += 1
+        for item in month_list:
+            year_month = item.split("-")
+            year = year_month[0]
+            month = year_month[1]
+            if brand.visit_set.filter(
+                visit_date__year=year, visit_date__month=month
+            ).exists():
+                visit_month_date = brand.visit_set.filter(
+                    visit_date__year=year, visit_date__month=month
+                ).aggregate(Sum("num"))
+                data[item] = visit_month_date["num__sum"]
+            else:
+                data[item] = 0
+
+        return Response(data)

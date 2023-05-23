@@ -6,6 +6,7 @@ from products.views import (
     UpdateProduct,
     Option,
     UpdateOption,
+    MonthlyProductData,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path("options/<int:product_pk>", Option.as_view()),
     path("create/option", CreateOption.as_view()),
     path("update/option/<int:pk>", UpdateOption.as_view()),
+    path("<int:brand_pk>/monthly", MonthlyProductData.as_view()),
 ]
