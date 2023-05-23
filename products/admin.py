@@ -15,5 +15,5 @@ class OptionsAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProductData)
-class OptionsAdmin(admin.ModelAdmin):
+class ProductDataAdmin(admin.ModelAdmin):
     pass
